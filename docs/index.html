@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Blažovický pivní cirkus – 22. 8. 2026">
+    <title>Blažovický pivní cirkus</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 24px 16px;
+            display: grid;
+            place-items: center;
+            background: #f4f1e8;
+        }
+
+        a {
+            display: block;
+            width: min(100%, 480px);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgb(0 0 0 / 18%);
+            transition: transform 160ms ease, box-shadow 160ms ease;
+        }
+
+        a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 36px rgb(0 0 0 / 24%);
+        }
+
+        a:focus-visible {
+            outline: 4px solid #1877f2;
+            outline-offset: 5px;
+        }
+
+        img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: inherit;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            a {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="https://fb.me/e/47KPXEQ8a"
+       target="_blank"
+       rel="noopener noreferrer"
+       aria-label="Otevřít facebookovou událost Blažovický pivní cirkus">
+        <img src="pivni-cirkus.jpg"
+             width="509"
+             height="720"
+             alt="Plakát Blažovického pivního cirkusu, 22. srpna 2026 na sokolském hřišti">
+    </a>
+</body>
+</html>
