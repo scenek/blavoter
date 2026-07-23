@@ -1,0 +1,27 @@
+# Local environment configuration
+.env
+.env.*
+!.env.example
+
+# Firebase and Google Cloud credentials
+service-account*.json
+*-firebase-adminsdk-*.json
+application_default_credentials.json
+credentials*.json
+*.pem
+*.key
+
+# Firebase local state and logs
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+node_modules/
+
+# Go build and test output
+/server
+/blavoter
+*.test
+coverage.out
+
+# Operating system files
+.DS_Store

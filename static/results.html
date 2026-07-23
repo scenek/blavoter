@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Výsledky</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-4 max-w-2xl mx-auto">
+    <header class="my-6">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <a id="backLink" href="/" class="text-amber-700 hover:underline">← Zpět</a>
+            <button id="refreshButton" type="button" class="text-amber-700 hover:underline">Obnovit</button>
+        </div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Výsledky</p>
+        <h1 id="eventName" class="text-3xl font-bold text-amber-600">Načítám…</h1>
+        <p class="mt-1 text-sm text-gray-500">Pořadí podle průměrného hodnocení.</p>
+    </header>
+
+    <main>
+        <p id="message" class="rounded-xl bg-white p-5 text-center text-gray-500 shadow" role="status">
+            Načítám výsledky…
+        </p>
+        <ol id="resultsList" hidden class="space-y-3"></ol>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+
+        let mode = "";
+        let eventId = "";
+        let publicEventPath = "";
+        let adminUser;
+
+        document.addEventListener("DOMContentLoaded", initialize);
+        document.getElementById("refreshButton").addEventListener("click", loadResults);
+
+        async function initialize() {
+            try {
+                const publicMatch = location.pathname.match(/^\/event\/([^/]+)\/([^/]+)\/results\/?$/);
+                const adminMatch = location.pathname.match(/^\/admin\/event\/([^/]+)\/results\/?$/);
+                if (publicMatch) {
+                    mode = "public";
+                    eventId = decodeURIComponent(publicMatch[1]);
+                    publicEventPath = `/event/${publicMatch[1]}/${publicMatch[2]}`;
+                    document.getElementById("backLink").href = publicEventPath;
+                } else if (adminMatch) {
+                    mode = "admin";
+                    eventId = decodeURIComponent(adminMatch[1]);
+                    document.getElementById("backLink").href = "/admin";
+                    await initializeAdminAuthentication();
+                } else {
+                    throw new Error("Invalid results URL");
+                }
+                await loadResults();
+            } catch (error) {
+                console.error(error);
+                showError(error.message === "not-public"
+                    ? "Výsledky této události nejsou veřejné."
+                    : "Výsledky se nepodařilo načíst.");
+            }
+        }
+
+        async function initializeAdminAuthentication() {
+            const response = await fetch("/api/firebase-config");
+            if (!response.ok) throw new Error("Firebase configuration is unavailable");
+            const app = initializeApp(await response.json(), "admin");
+            const auth = getAuth(app);
+            await auth.authStateReady();
+            if (!auth.currentUser || auth.currentUser.isAnonymous) {
+                throw new Error("admin-login-required");
+            }
+            adminUser = auth.currentUser;
+        }
+
+        async function adminFetch(url) {
+            if (!adminUser) throw new Error("admin-login-required");
+            return fetch(url, {
+                headers: {
+                    Authorization: `Bearer ${await adminUser.getIdToken()}`
+                }
+            });
+        }
+
+        async function loadResults() {
+            const message = document.getElementById("message");
+            const list = document.getElementById("resultsList");
+            message.hidden = false;
+            message.className = "rounded-xl bg-white p-5 text-center text-gray-500 shadow";
+            message.textContent = "Načítám výsledky…";
+            list.hidden = true;
+
+            try {
+                let event;
+                let resultsResponse;
+                if (mode === "admin") {
+                    const eventsResponse = await adminFetch("/api/admin/events");
+                    if (!eventsResponse.ok) throw new Error("admin-login-required");
+                    const events = await eventsResponse.json();
+                    event = events.find(candidate => candidate.id === eventId);
+                    if (!event) throw new Error("event-not-found");
+                    resultsResponse = await adminFetch(`/api/admin/events/${encodeURIComponent(eventId)}/contestants`);
+                } else {
+                    const eventResponse = await fetch(`/api/events/${encodeURIComponent(eventId)}`);
+                    if (!eventResponse.ok) throw new Error("event-not-found");
+                    event = await eventResponse.json();
+                    if (!event.showResults) throw new Error("not-public");
+                    resultsResponse = await fetch(`/api/events/${encodeURIComponent(eventId)}/results`);
+                }
+
+                if (resultsResponse.status === 401 || resultsResponse.status === 403) {
+                    throw new Error(mode === "admin" ? "admin-login-required" : "not-public");
+                }
+                if (!resultsResponse.ok) throw new Error("results-unavailable");
+
+                const results = await resultsResponse.json();
+                document.getElementById("eventName").textContent = event.name;
+                document.title = `${event.name} – Výsledky`;
+                renderResults(results);
+            } catch (error) {
+                console.error(error);
+                if (error.message === "not-public") {
+                    showError("Výsledky této události nejsou veřejné.");
+                } else if (error.message === "admin-login-required") {
+                    showError("Pro zobrazení neveřejných výsledků se přihlas v administraci.", "/admin");
+                } else {
+                    showError("Výsledky se nepodařilo načíst.");
+                }
+            }
+        }
+
+        function renderResults(results) {
+            results.sort((a, b) => {
+                const aHasVotes = a.voteCount > 0;
+                const bHasVotes = b.voteCount > 0;
+                if (aHasVotes !== bHasVotes) return bHasVotes - aHasVotes;
+                if (a.avgScore !== b.avgScore) return b.avgScore - a.avgScore;
+                if (a.voteCount !== b.voteCount) return b.voteCount - a.voteCount;
+                return a.name.localeCompare(b.name, "cs");
+            });
+
+            const list = document.getElementById("resultsList");
+            list.replaceChildren();
+            if (results.length === 0) {
+                const empty = document.createElement("li");
+                empty.className = "rounded-xl bg-white p-5 text-center text-gray-500 shadow";
+                empty.textContent = "Událost zatím nemá žádné hlasovací položky.";
+                list.appendChild(empty);
+            } else {
+                results.forEach((result, index) => list.appendChild(createResultRow(result, index + 1)));
+            }
+            document.getElementById("message").hidden = true;
+            list.hidden = false;
+        }
+
+        function createResultRow(result, rank) {
+            const row = document.createElement("li");
+            row.className = "flex items-center gap-4 rounded-xl bg-white p-4 shadow";
+
+            const rankElement = document.createElement("span");
+            rankElement.className = "flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-lg font-bold text-amber-800";
+            rankElement.textContent = String(rank);
+
+            const details = document.createElement("div");
+            details.className = "min-w-0 grow";
+            const name = document.createElement("h2");
+            name.className = "font-bold";
+            name.textContent = result.name;
+            const description = document.createElement("p");
+            description.className = "text-sm text-gray-500";
+            description.textContent = result.description || "";
+            details.append(name, description);
+
+            const values = document.createElement("div");
+            values.className = "shrink-0 text-right";
+            const average = document.createElement("p");
+            average.className = "text-xl font-bold text-amber-700";
+            average.textContent = result.voteCount > 0
+                ? Number(result.avgScore).toLocaleString("cs-CZ", {minimumFractionDigits: 1, maximumFractionDigits: 1})
+                : "—";
+            const count = document.createElement("p");
+            count.className = "text-xs text-gray-500";
+            count.textContent = `Počet hlasů: ${result.voteCount}`;
+            values.append(average, count);
+
+            row.append(rankElement, details, values);
+            return row;
+        }
+
+        function showError(text, link) {
+            const message = document.getElementById("message");
+            message.hidden = false;
+            message.className = "rounded-xl bg-red-50 p-5 text-center text-red-700 shadow";
+            message.replaceChildren(document.createTextNode(text));
+            if (link) {
+                const anchor = document.createElement("a");
+                anchor.href = link;
+                anchor.className = "mt-3 block font-semibold underline";
+                anchor.textContent = "Otevřít administraci";
+                message.appendChild(anchor);
+            }
+            document.getElementById("resultsList").hidden = true;
+        }
+    </script>
+</body>
+</html>

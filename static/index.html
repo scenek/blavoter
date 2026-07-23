@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Načítám událost…</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-4 max-w-2xl mx-auto">
+
+    <header class="text-center my-6">
+        <div class="flex justify-end gap-4 mb-2">
+            <a id="resultsLink" href="#" hidden class="text-amber-700 hover:underline">Výsledky</a>
+            <a id="profileLink" href="#" class="text-amber-700 hover:underline">Uživatelský profil</a>
+        </div>
+        <h1 id="eventName" class="text-3xl font-bold text-amber-600">Načítám událost…</h1>
+        <p class="text-gray-500 text-sm">Ohodnoť položky známkou 0 (nejhorší) – 10 (nejlepší).</p>
+    </header>
+
+    <div class="bg-white p-4 rounded-xl shadow mb-4">
+        <p id="eventDescription" class="text-sm text-gray-500"></p>
+        <p id="votingStatus" hidden class="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-900">
+            Hlasování je dočasně zastaveno. Uložená hodnocení můžeš zobrazit, ale nyní je nelze měnit.
+        </p>
+    </div>
+
+    <div id="contestantsList" class="space-y-4">
+        <p class="text-center text-gray-400">Načítám hlasovací položky...</p>
+    </div>
+    <p id="saveStatus" class="mt-4 min-h-5 text-center text-sm text-gray-500" role="status" aria-live="polite"></p>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+
+        let myScores = {};
+        let auth;
+        let authenticatedUser;
+        let currentEventId = "";
+        let currentNickname = "";
+        let showResults = false;
+        let votingStopped = false;
+        let saveLoopRunning = false;
+        const pendingScores = new Map();
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                await initializeAuthentication();
+                await loadEventFromURL();
+            } catch (error) {
+                console.error("Event initialization failed:", error);
+                document.getElementById("contestantsList").innerHTML =
+                    '<p class="text-center text-red-500">Událost se nepodařilo otevřít. Zkontroluj odkaz nebo obnov stránku.</p>';
+            }
+        });
+
+        async function initializeAuthentication() {
+            const response = await fetch("/api/firebase-config");
+            if (!response.ok) throw new Error("Firebase configuration is unavailable");
+
+            const app = initializeApp(await response.json());
+            auth = getAuth(app);
+            await auth.authStateReady();
+            authenticatedUser = auth.currentUser || (await signInAnonymously(auth)).user;
+        }
+
+        async function authenticatedFetch(url, options = {}) {
+            if (!authenticatedUser) throw new Error("User is not authenticated");
+
+            const headers = new Headers(options.headers || {});
+            headers.set("Authorization", `Bearer ${await authenticatedUser.getIdToken()}`);
+            return fetch(url, { ...options, headers });
+        }
+
+        async function loadEventFromURL() {
+            const match = location.pathname.match(/^\/event\/([^/]+)\/([^/]+)\/?$/);
+            if (!match) throw new Error("Event invitation URL is invalid");
+            currentEventId = decodeURIComponent(match[1]);
+            document.getElementById("profileLink").href =
+                `/event/${match[1]}/${match[2]}/profile`;
+            document.getElementById("resultsLink").href =
+                `/event/${match[1]}/${match[2]}/results`;
+
+            const response = await fetch(`/api/events/${encodeURIComponent(currentEventId)}`);
+            if (!response.ok) throw new Error("Event is unavailable");
+            const event = await response.json();
+            document.getElementById("eventName").textContent = event.name;
+            document.title = event.name;
+            document.getElementById("eventDescription").textContent = event.description || "";
+            showResults = event.showResults === true;
+            document.getElementById("resultsLink").hidden = !showResults;
+            votingStopped = event.votingStopped === true;
+            document.getElementById("votingStatus").hidden = !votingStopped;
+            await loadMyVotes(currentEventId);
+        }
+
+        async function loadMyVotes(eventId) {
+            const res = await authenticatedFetch(`/api/events/${encodeURIComponent(eventId)}/my-votes`);
+            if (!res.ok) throw new Error("Could not load saved votes");
+
+            const data = await res.json();
+            if (currentEventId !== eventId) return;
+            currentNickname = data.nickname || "";
+            if (!currentNickname) {
+                location.replace(document.getElementById("profileLink").href);
+                return;
+            }
+            document.getElementById("profileLink").textContent =
+                `Uživatel ${currentNickname}`;
+            if (data.scores) {
+                myScores = data.scores;
+            }
+            await loadContestants(eventId);
+        }
+
+        async function loadContestants(eventId = currentEventId) {
+            const res = await fetch(`/api/events/${encodeURIComponent(eventId)}/contestants`);
+            if (!res.ok) throw new Error("Could not load contestants");
+            const contestants = await res.json();
+            if (currentEventId !== eventId) return;
+            contestants.sort((a, b) => a.name.localeCompare(b.name, "cs"));
+            const currentContestantIds = new Set(contestants.map(contestant => contestant.id));
+            myScores = Object.fromEntries(
+                Object.entries(myScores).filter(([contestantId]) => currentContestantIds.has(contestantId))
+            );
+            for (const contestantId of pendingScores.keys()) {
+                if (!currentContestantIds.has(contestantId)) pendingScores.delete(contestantId);
+            }
+            const container = document.getElementById("contestantsList");
+            container.replaceChildren();
+
+            if (!contestants || contestants.length === 0) {
+                const emptyMessage = document.createElement("p");
+                emptyMessage.className = "text-center text-gray-400";
+                emptyMessage.textContent = "Zatím nebyly přidány žádné hlasovací položky.";
+                container.appendChild(emptyMessage);
+                return;
+            }
+
+            contestants.forEach(c => {
+                const avgText = c.voteCount > 0 ? `Ø ${c.avgScore.toFixed(1)} (${c.voteCount}x)` : "Zatím nehodnoceno";
+
+                const card = document.createElement("div");
+                card.className = "bg-white p-4 rounded-xl shadow";
+
+                const details = document.createElement("div");
+                const name = document.createElement("h3");
+                name.className = "font-bold text-lg";
+                name.textContent = c.name;
+
+                const description = document.createElement("p");
+                description.className = "text-xs text-gray-400";
+                description.textContent = c.description;
+
+                const average = document.createElement("span");
+                average.className = "inline-block mt-1 bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-semibold";
+                average.textContent = avgText;
+
+                details.append(name, description);
+                if (showResults) details.appendChild(average);
+
+                const controls = document.createElement("div");
+                controls.className = "flex flex-nowrap items-center gap-1.5 mt-3 overflow-x-auto pb-2";
+                const choiceButtons = [];
+                const choices = [null, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+                const selectedValue = () => {
+                    if (pendingScores.has(c.id)) return pendingScores.get(c.id);
+                    return Object.prototype.hasOwnProperty.call(myScores, c.id) ? myScores[c.id] : null;
+                };
+                const refreshChoices = () => {
+                    const selected = selectedValue();
+                    for (const entry of choiceButtons) {
+                        const active = entry.value === selected;
+                        entry.button.setAttribute("aria-pressed", String(active));
+                        entry.button.className = active
+                            ? "shrink-0 border-2 border-amber-600 bg-amber-100 text-amber-900 px-3 py-2 rounded-lg font-semibold"
+                            : "shrink-0 border border-gray-300 bg-white px-3 py-2 rounded-lg hover:bg-gray-50";
+                        if (votingStopped) entry.button.className += " opacity-50 cursor-not-allowed";
+                    }
+                };
+
+                for (const value of choices) {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.disabled = votingStopped;
+                    button.textContent = value === null ? "Nehodnoceno" : String(value);
+                    button.addEventListener("click", () => {
+                        pendingScores.set(c.id, value);
+                        refreshChoices();
+                        queueVoteSave();
+                    });
+                    choiceButtons.push({ button, value });
+                    controls.appendChild(button);
+                }
+
+                refreshChoices();
+
+                card.append(details, controls);
+                container.appendChild(card);
+            });
+        }
+
+        async function queueVoteSave() {
+            if (saveLoopRunning || pendingScores.size === 0) return;
+            if (votingStopped) {
+                alert("Hlasování je momentálně zastaveno.");
+                return;
+            }
+            if (!currentNickname) {
+                alert("Nejdříve si nastav přezdívku v uživatelském profilu.");
+                location.href = document.getElementById("profileLink").href;
+                return;
+            }
+            saveLoopRunning = true;
+            let completed = false;
+            const status = document.getElementById("saveStatus");
+            try {
+                while (pendingScores.size > 0) {
+                    const changes = new Map(pendingScores);
+                    const nextScores = { ...myScores };
+                    for (const [contestantId, value] of changes) {
+                        if (value === null) {
+                            delete nextScores[contestantId];
+                        } else {
+                            nextScores[contestantId] = value;
+                        }
+                    }
+
+                    status.className = "mt-4 min-h-5 text-center text-sm text-gray-500";
+                    status.textContent = "Ukládám hodnocení…";
+                    const response = await authenticatedFetch(`/api/events/${encodeURIComponent(currentEventId)}/vote`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ scores: nextScores })
+                    });
+                    if (response.status === 429) {
+                        status.textContent = "Čekám před další změnou…";
+                        const retrySeconds = Number(response.headers.get("Retry-After")) || 1;
+                        await new Promise(resolve => setTimeout(resolve, retrySeconds * 1000));
+                        continue;
+                    }
+                    if (response.status === 409) {
+                        votingStopped = true;
+                        document.getElementById("votingStatus").hidden = false;
+                        pendingScores.clear();
+                        status.className = "mt-4 min-h-5 text-center text-sm text-amber-700";
+                        status.textContent = "Hlasování bylo zastaveno. Poslední změna nebyla uložena.";
+                        await loadContestants();
+                        alert("Hlasování bylo zastaveno. Hodnocení nebylo uloženo.");
+                        return;
+                    }
+                    if (!response.ok) throw new Error("Vote save failed");
+
+                    myScores = nextScores;
+                    for (const [contestantId, value] of changes) {
+                        if (pendingScores.has(contestantId) && pendingScores.get(contestantId) === value) {
+                            pendingScores.delete(contestantId);
+                        }
+                    }
+                }
+
+                completed = true;
+                status.className = "mt-4 min-h-5 text-center text-sm text-green-700";
+                status.textContent = "Hodnocení uloženo.";
+                if (showResults) {
+                    await loadContestants().catch(error => console.error("Result refresh failed:", error));
+                }
+            } catch (error) {
+                console.error(error);
+                status.className = "mt-4 min-h-5 text-center text-sm text-red-600";
+                status.textContent = "Hodnocení se nepodařilo uložit. Zkus vybrat hodnotu znovu.";
+                alert("Hodnocení se nepodařilo uložit.");
+            } finally {
+                saveLoopRunning = false;
+                if (completed && pendingScores.size > 0 && !votingStopped) {
+                    queueVoteSave();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

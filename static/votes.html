@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hlasy uživatelů</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-4 max-w-screen-2xl mx-auto">
+    <header class="my-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <a href="/admin" class="text-amber-700 hover:underline">← Zpět do administrace</a>
+            <div class="flex items-center gap-4">
+                <a id="resultsLink" href="#" class="text-amber-700 hover:underline">Souhrnné výsledky</a>
+                <button id="refreshButton" type="button" class="text-blue-700 hover:underline">Obnovit</button>
+            </div>
+        </div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Hlasy uživatelů</p>
+        <h1 id="eventName" class="text-3xl font-bold text-amber-600">Načítám…</h1>
+        <p id="summary" class="mt-1 text-sm text-gray-500">
+            Načítám jednotlivé hlasovací lístky…
+        </p>
+    </header>
+
+    <main>
+        <p id="message" class="rounded-xl bg-white p-5 text-center text-gray-500 shadow" role="status">
+            Načítám hlasy…
+        </p>
+        <div id="tablePanel" hidden class="max-h-[70vh] overflow-auto rounded-xl bg-white shadow">
+            <table class="min-w-full border-collapse text-sm">
+                <thead id="votesHead" class="bg-amber-50"></thead>
+                <tbody id="votesBody" class="divide-y divide-gray-200"></tbody>
+            </table>
+        </div>
+        <nav id="pagination" hidden class="mt-4 flex items-center justify-center gap-4" aria-label="Stránkování uživatelů">
+            <button id="previousPage" type="button"
+                    class="rounded-lg bg-white px-4 py-2 font-semibold text-blue-700 shadow disabled:cursor-not-allowed disabled:text-gray-300">
+                ← Předchozí
+            </button>
+            <span id="pageLabel" class="text-sm text-gray-600"></span>
+            <button id="nextPage" type="button"
+                    class="rounded-lg bg-white px-4 py-2 font-semibold text-blue-700 shadow disabled:cursor-not-allowed disabled:text-gray-300">
+                Další →
+            </button>
+        </nav>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+
+        let eventId = "";
+        let adminUser;
+        const pageTokens = [""];
+        let pageIndex = 0;
+        let nextPageToken = "";
+
+        document.addEventListener("DOMContentLoaded", initialize);
+        document.getElementById("refreshButton").addEventListener("click", () => {
+            pageTokens.splice(1);
+            pageIndex = 0;
+            loadVotes();
+        });
+        document.getElementById("previousPage").addEventListener("click", () => {
+            if (pageIndex > 0) {
+                pageIndex--;
+                loadVotes();
+            }
+        });
+        document.getElementById("nextPage").addEventListener("click", () => {
+            if (nextPageToken) {
+                pageTokens[pageIndex + 1] = nextPageToken;
+                pageIndex++;
+                loadVotes();
+            }
+        });
+
+        async function initialize() {
+            try {
+                const match = location.pathname.match(/^\/admin\/event\/([^/]+)\/votes\/?$/);
+                if (!match) throw new Error("invalid-url");
+                eventId = decodeURIComponent(match[1]);
+                document.getElementById("resultsLink").href =
+                    `/admin/event/${encodeURIComponent(eventId)}/results`;
+
+                const configResponse = await fetch("/api/firebase-config");
+                if (!configResponse.ok) throw new Error("firebase-unavailable");
+                const app = initializeApp(await configResponse.json(), "admin");
+                const auth = getAuth(app);
+                await auth.authStateReady();
+                if (!auth.currentUser || auth.currentUser.isAnonymous) {
+                    throw new Error("admin-login-required");
+                }
+                adminUser = auth.currentUser;
+                await loadVotes();
+            } catch (error) {
+                console.error(error);
+                if (error.message === "admin-login-required") {
+                    showError("Pro zobrazení hlasů se přihlas v administraci.", true);
+                } else {
+                    showError("Hlasy uživatelů se nepodařilo načíst.");
+                }
+            }
+        }
+
+        async function adminFetch(url) {
+            if (!adminUser) throw new Error("admin-login-required");
+            return fetch(url, {
+                headers: {
+                    Authorization: `Bearer ${await adminUser.getIdToken()}`
+                },
+                cache: "no-store"
+            });
+        }
+
+        async function loadVotes() {
+            const message = document.getElementById("message");
+            message.hidden = false;
+            message.className = "rounded-xl bg-white p-5 text-center text-gray-500 shadow";
+            message.textContent = "Načítám hlasy…";
+            document.getElementById("tablePanel").hidden = true;
+            document.getElementById("pagination").hidden = true;
+
+            try {
+                const params = new URLSearchParams({pageSize: "50"});
+                if (pageTokens[pageIndex]) params.set("pageToken", pageTokens[pageIndex]);
+                const [eventsResponse, votesResponse] = await Promise.all([
+                    adminFetch("/api/admin/events"),
+                    adminFetch(`/api/admin/events/${encodeURIComponent(eventId)}/votes?${params}`)
+                ]);
+                if (eventsResponse.status === 401 || eventsResponse.status === 403 ||
+                    votesResponse.status === 401 || votesResponse.status === 403) {
+                    throw new Error("admin-login-required");
+                }
+                if (votesResponse.status === 410) throw new Error("ballots-cleaned");
+                if (!eventsResponse.ok || !votesResponse.ok) throw new Error("votes-unavailable");
+
+                const events = await eventsResponse.json();
+                const event = events.find(candidate => candidate.id === eventId);
+                if (!event) throw new Error("event-not-found");
+                const data = await votesResponse.json();
+                nextPageToken = data.nextPageToken || "";
+
+                document.getElementById("eventName").textContent = event.name;
+                document.title = `${event.name} – Hlasy uživatelů`;
+                renderVotes(data);
+            } catch (error) {
+                console.error(error);
+                if (error.message === "ballots-cleaned") {
+                    showError("Jednotlivé hlasovací lístky již byly odstraněny. K dispozici zůstávají pouze souhrnné výsledky.");
+                } else if (error.message === "admin-login-required") {
+                    showError("Pro zobrazení hlasů se přihlas v administraci.", true);
+                } else {
+                    showError("Hlasy uživatelů se nepodařilo načíst.");
+                }
+            }
+        }
+
+        function renderVotes(data) {
+            const options = Array.isArray(data.options) ? data.options : [];
+            const voters = Array.isArray(data.voters) ? data.voters : [];
+            options.sort((a, b) => a.name.localeCompare(b.name, "cs"));
+            voters.sort((a, b) => {
+                const nicknameOrder = (a.nickname || "").localeCompare(b.nickname || "", "cs");
+                return nicknameOrder || a.voterId.localeCompare(b.voterId);
+            });
+
+            const headRow = document.createElement("tr");
+            const userHeading = document.createElement("th");
+            userHeading.scope = "col";
+            userHeading.className =
+                "sticky left-0 top-0 z-30 min-w-52 border-b border-r bg-amber-50 px-4 py-3 text-left font-bold";
+            userHeading.textContent = "Uživatel";
+            headRow.appendChild(userHeading);
+            for (const option of options) {
+                const heading = document.createElement("th");
+                heading.scope = "col";
+                heading.className =
+                    "sticky top-0 z-20 min-w-36 border-b bg-amber-50 px-3 py-3 text-center align-bottom font-semibold";
+                heading.textContent = option.name || "Položka bez názvu";
+                heading.title = option.name || "Položka bez názvu";
+                headRow.appendChild(heading);
+            }
+            document.getElementById("votesHead").replaceChildren(headRow);
+
+            const body = document.getElementById("votesBody");
+            body.replaceChildren();
+            let submittedVotes = 0;
+            voters.forEach((voter, index) => {
+                const row = document.createElement("tr");
+                const rowBackground = index % 2 === 0 ? "bg-white" : "bg-gray-50";
+                row.className = `${rowBackground} hover:bg-amber-50`;
+
+                const userCell = document.createElement("th");
+                userCell.scope = "row";
+                userCell.className =
+                    `sticky left-0 z-10 min-w-52 border-r px-4 py-3 text-left font-semibold ${rowBackground}`;
+                const nickname = document.createElement("span");
+                nickname.textContent = voter.nickname || `Uživatel ${index + 1}`;
+                const identifier = document.createElement("small");
+                identifier.className = "ml-2 font-mono font-normal text-gray-400";
+                identifier.textContent = `#${String(voter.voterId || "").slice(0, 8)}`;
+                identifier.title = voter.voterId || "";
+                userCell.append(nickname, identifier);
+                row.appendChild(userCell);
+
+                for (const option of options) {
+                    const scoreCell = document.createElement("td");
+                    scoreCell.className = "min-w-36 px-3 py-3 text-center tabular-nums";
+                    if (Object.prototype.hasOwnProperty.call(voter.scores || {}, option.id)) {
+                        scoreCell.textContent = String(voter.scores[option.id]);
+                        scoreCell.className += " font-bold text-amber-800";
+                        submittedVotes++;
+                    } else {
+                        scoreCell.textContent = "—";
+                        scoreCell.className += " text-gray-300";
+                    }
+                    row.appendChild(scoreCell);
+                }
+                body.appendChild(row);
+            });
+
+            document.getElementById("summary").textContent =
+                `${voters.length} uživatelů na této stránce · ${submittedVotes} uložených hodnocení · ${options.length} hlasovacích položek`;
+            document.getElementById("previousPage").disabled = pageIndex === 0;
+            document.getElementById("nextPage").disabled = !nextPageToken;
+            document.getElementById("pageLabel").textContent = `Strana ${pageIndex + 1}`;
+            const message = document.getElementById("message");
+            if (voters.length === 0) {
+                message.hidden = false;
+                message.className = "rounded-xl bg-white p-5 text-center text-gray-500 shadow";
+                message.textContent = "Zatím nejsou uložené žádné hlasovací lístky.";
+                document.getElementById("tablePanel").hidden = true;
+                document.getElementById("pagination").hidden = pageIndex === 0;
+            } else {
+                message.hidden = true;
+                document.getElementById("tablePanel").hidden = false;
+                document.getElementById("pagination").hidden = pageIndex === 0 && !nextPageToken;
+            }
+        }
+
+        function showError(text, includeAdminLink = false) {
+            const message = document.getElementById("message");
+            message.hidden = false;
+            message.className = "rounded-xl bg-red-50 p-5 text-center text-red-700 shadow";
+            message.replaceChildren(document.createTextNode(text));
+            if (includeAdminLink) {
+                const link = document.createElement("a");
+                link.href = "/admin";
+                link.className = "mt-3 block font-semibold underline";
+                link.textContent = "Otevřít administraci";
+                message.appendChild(link);
+            }
+            document.getElementById("tablePanel").hidden = true;
+            document.getElementById("pagination").hidden = true;
+        }
+    </script>
+</body>
+</html>

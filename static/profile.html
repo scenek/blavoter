@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uživatelský profil – Degustační soutěž</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-4 max-w-lg mx-auto">
+    <header class="my-6">
+        <a id="backLink" href="/" class="text-amber-700 hover:underline">← Zpět k hlasování</a>
+        <h1 class="text-3xl font-bold text-amber-600 mt-4">Uživatelský profil</h1>
+        <p id="eventName" class="text-gray-500"></p>
+    </header>
+
+    <main class="bg-white p-5 rounded-xl shadow">
+        <form id="profileForm" class="space-y-4">
+            <div>
+                <label for="nickname" class="block text-sm font-semibold mb-1">Tvoje přezdívka</label>
+                <input id="nickname" required maxlength="80" autocomplete="nickname"
+                    class="w-full border p-2 rounded-lg focus:outline-amber-500">
+            </div>
+            <button id="saveButton" type="submit"
+                class="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-700">
+                Uložit přezdívku
+            </button>
+            <p id="message" class="text-sm" role="status"></p>
+        </form>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signOut } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+
+        let auth;
+        let user;
+        let eventId = "";
+        let votingURL = "";
+
+        document.addEventListener("DOMContentLoaded", initialize);
+        document.getElementById("profileForm").addEventListener("submit", saveProfile);
+
+        async function initialize() {
+            const message = document.getElementById("message");
+            try {
+                const match = location.pathname.match(/^\/event\/([^/]+)\/([^/]+)\/profile\/?$/);
+                if (!match) throw new Error("Invalid profile URL");
+                eventId = decodeURIComponent(match[1]);
+                votingURL = `/event/${match[1]}/${match[2]}`;
+                document.getElementById("backLink").href = votingURL;
+
+                const configResponse = await fetch("/api/firebase-config");
+                if (!configResponse.ok) throw new Error("Firebase configuration is unavailable");
+                const app = initializeApp(await configResponse.json());
+                auth = getAuth(app);
+                await auth.authStateReady();
+                user = auth.currentUser || (await signInAnonymously(auth)).user;
+
+                const [eventResponse, ballotResponse] = await Promise.all([
+                    fetch(`/api/events/${encodeURIComponent(eventId)}`),
+                    authenticatedFetch(`/api/events/${encodeURIComponent(eventId)}/my-votes`)
+                ]);
+                if (!eventResponse.ok || !ballotResponse.ok) throw new Error("Profile could not be loaded");
+
+                const event = await eventResponse.json();
+                const ballot = await ballotResponse.json();
+                document.getElementById("eventName").textContent = event.name;
+                document.getElementById("nickname").value = ballot.nickname || "";
+            } catch (error) {
+                console.error(error);
+                message.className = "text-sm text-red-600";
+                message.textContent = "Profil se nepodařilo načíst. Zkontroluj odkaz nebo obnov stránku.";
+                document.getElementById("saveButton").disabled = true;
+            }
+        }
+
+        async function authenticatedFetch(url, options = {}) {
+            if (!user) throw new Error("User is not authenticated");
+            const headers = new Headers(options.headers || {});
+            headers.set("Authorization", `Bearer ${await user.getIdToken()}`);
+            let response = await fetch(url, { ...options, headers });
+            if (response.status !== 401) return response;
+
+            // The scheduled cleanup may have deleted this anonymous account
+            // while its cached ID token was still valid. Replace the local
+            // identity once and retry the mutation with a fresh UID.
+            await signOut(auth);
+            user = (await signInAnonymously(auth)).user;
+            headers.set("Authorization", `Bearer ${await user.getIdToken()}`);
+            response = await fetch(url, { ...options, headers });
+            return response;
+        }
+
+        async function saveProfile(event) {
+            event.preventDefault();
+            const nickname = document.getElementById("nickname").value.trim();
+            const message = document.getElementById("message");
+            message.className = "text-sm text-gray-500";
+            message.textContent = "Ukládám…";
+
+            try {
+                const response = await authenticatedFetch(`/api/events/${encodeURIComponent(eventId)}/profile`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nickname })
+                });
+                if (!response.ok) throw new Error("Profile save failed");
+                message.className = "text-sm text-green-700";
+                message.textContent = "Přezdívka byla uložena.";
+                location.replace(votingURL);
+            } catch (error) {
+                console.error(error);
+                message.className = "text-sm text-red-600";
+                message.textContent = "Přezdívku se nepodařilo uložit.";
+            }
+        }
+    </script>
+</body>
+</html>

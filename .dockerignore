@@ -1,0 +1,14 @@
+.git
+.gitignore
+.firebase
+.firebaserc
+.env
+.env.*
+functions
+blavoter
+server
+*.test
+coverage.out
+README.md
+firebase.json
+.DS_Store

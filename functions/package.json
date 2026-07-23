@@ -1,0 +1,17 @@
+{
+  "name": "blavoter-functions",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "check": "node --check index.js && node --check cleanup.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.2.0",
+    "firebase-functions": "^7.3.0"
+  }
+}

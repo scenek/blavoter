@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrace – Degustační soutěž</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-4 max-w-4xl mx-auto">
+    <header class="flex flex-wrap items-center justify-between gap-3 my-6">
+        <div>
+            <h1 class="text-3xl font-bold text-amber-600">Administrace soutěže</h1>
+            <p class="text-sm text-gray-500">Správa událostí, hlasovacích položek a výsledků</p>
+        </div>
+        <a href="/" class="text-amber-700 hover:underline">Zpět k hlasování</a>
+    </header>
+
+    <section id="loginPanel" class="bg-white p-6 rounded-xl shadow text-center">
+        <p id="loginStatus" class="mb-4 text-gray-600">Načítám přihlášení…</p>
+        <button id="loginButton" hidden class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700">
+            Přihlásit přes Google
+        </button>
+    </section>
+
+    <main id="adminPanel" hidden>
+        <div class="bg-white p-4 rounded-xl shadow mb-6 flex flex-wrap justify-between items-center gap-3">
+            <p>Přihlášený správce: <strong id="adminEmail"></strong></p>
+            <button id="logoutButton" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50">Odhlásit</button>
+        </div>
+
+        <section class="bg-white p-5 rounded-xl shadow mb-6">
+            <h2 class="text-xl font-bold mb-4">Události</h2>
+            <div class="flex flex-wrap gap-2 mb-4">
+                <select id="adminEventSelect" class="grow border p-2 rounded-lg"></select>
+                <button id="newEventButton" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Nová událost</button>
+                <button id="editEventButton" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50">Upravit</button>
+                <a id="adminResultsLink" hidden class="border border-amber-500 text-amber-700 px-4 py-2 rounded-lg hover:bg-amber-50">Výsledky</a>
+                <a id="adminVotesLink" hidden class="border border-blue-500 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50">Hlasy uživatelů</a>
+                <button id="votingStateButton" class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700">Zastavit hlasování</button>
+                <button id="archiveEventButton" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Archivovat</button>
+            </div>
+
+            <form id="eventForm" hidden class="space-y-4 border-t pt-4">
+                <input id="eventId" type="hidden">
+                <h3 id="eventFormTitle" class="font-bold">Nová událost</h3>
+                <div>
+                    <label for="eventName" class="block text-sm font-semibold mb-1">Název události</label>
+                    <input id="eventName" required maxlength="100" class="w-full border p-2 rounded-lg focus:outline-amber-500">
+                </div>
+                <div>
+                    <label for="eventDescription" class="block text-sm font-semibold mb-1">Popis</label>
+                    <textarea id="eventDescription" maxlength="500" rows="3" class="w-full border p-2 rounded-lg focus:outline-amber-500"></textarea>
+                </div>
+                <label class="flex items-center gap-2">
+                    <input id="eventShowResults" type="checkbox" class="size-4">
+                    <span>Zobrazit hlasujícím počet hlasů a průměrné hodnocení</span>
+                </label>
+                <div class="flex gap-2">
+                    <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-700">Uložit událost</button>
+                    <button id="cancelEventButton" type="button" class="border border-gray-300 px-5 py-2 rounded-lg hover:bg-gray-50">Zrušit</button>
+                </div>
+                <p id="eventFormMessage" class="text-sm" role="status"></p>
+            </form>
+            <p id="eventMessage" class="text-sm text-gray-500"></p>
+            <div id="shareLinkPanel" hidden class="mt-4 border-t pt-4">
+                <label for="shareLink" class="block text-sm font-semibold mb-1">Odkaz pro hlasující</label>
+                <div class="flex flex-wrap gap-2">
+                    <input id="shareLink" readonly class="grow border p-2 rounded-lg bg-gray-50">
+                    <button id="copyShareLinkButton" class="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600">
+                        Kopírovat odkaz
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="contestantSection" hidden class="bg-white p-5 rounded-xl shadow mb-6">
+            <h2 id="formTitle" class="text-xl font-bold mb-4">Přidat hlasovací položku</h2>
+            <form id="contestantForm" class="space-y-4">
+                <input id="contestantId" type="hidden">
+                <div>
+                    <label for="contestantName" class="block text-sm font-semibold mb-1">Název hlasovací položky</label>
+                    <input id="contestantName" required maxlength="100" class="w-full border p-2 rounded-lg focus:outline-amber-500">
+                </div>
+                <div>
+                    <label for="contestantDescription" class="block text-sm font-semibold mb-1">Popis</label>
+                    <textarea id="contestantDescription" maxlength="500" rows="3" class="w-full border p-2 rounded-lg focus:outline-amber-500"></textarea>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-700">
+                        Uložit
+                    </button>
+                    <button id="cancelEditButton" type="button" hidden class="border border-gray-300 px-5 py-2 rounded-lg hover:bg-gray-50">
+                        Zrušit úpravu
+                    </button>
+                </div>
+                <p id="formMessage" class="text-sm" role="status"></p>
+            </form>
+        </section>
+
+        <section id="contestantListSection" hidden>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h2 class="text-xl font-bold">Hlasovací položky a výsledky</h2>
+                <div class="flex items-center gap-3">
+                    <button id="rebuildResultsButton" class="text-blue-700 hover:underline">Přepočítat výsledky</button>
+                    <button id="refreshButton" class="text-amber-700 hover:underline">Obnovit</button>
+                </div>
+            </div>
+            <div id="contestantsList" class="space-y-3"></div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import {
+            getAuth,
+            GoogleAuthProvider,
+            signInWithPopup,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+
+        let auth;
+        let adminUser;
+        let events = [];
+        let contestants = [];
+        let currentEventId = "";
+
+        const loginPanel = document.getElementById("loginPanel");
+        const loginStatus = document.getElementById("loginStatus");
+        const loginButton = document.getElementById("loginButton");
+        const adminPanel = document.getElementById("adminPanel");
+        const eventForm = document.getElementById("eventForm");
+        const contestantForm = document.getElementById("contestantForm");
+        const formMessage = document.getElementById("formMessage");
+
+        document.addEventListener("DOMContentLoaded", initialize);
+        loginButton.addEventListener("click", login);
+        document.getElementById("logoutButton").addEventListener("click", logout);
+        document.getElementById("adminEventSelect").addEventListener("change", event => selectAdminEvent(event.target.value));
+        document.getElementById("newEventButton").addEventListener("click", startNewEvent);
+        document.getElementById("editEventButton").addEventListener("click", editCurrentEvent);
+        document.getElementById("votingStateButton").addEventListener("click", toggleVotingState);
+        document.getElementById("archiveEventButton").addEventListener("click", archiveOrRestoreEvent);
+        document.getElementById("cancelEventButton").addEventListener("click", resetEventForm);
+        document.getElementById("copyShareLinkButton").addEventListener("click", copyShareLink);
+        document.getElementById("rebuildResultsButton").addEventListener("click", rebuildResults);
+        document.getElementById("refreshButton").addEventListener("click", () => loadContestants());
+        document.getElementById("cancelEditButton").addEventListener("click", resetContestantForm);
+        eventForm.addEventListener("submit", saveEvent);
+        contestantForm.addEventListener("submit", saveContestant);
+
+        async function initialize() {
+            try {
+                const response = await fetch("/api/firebase-config");
+                if (!response.ok) throw new Error("Firebase configuration is unavailable");
+
+                // A named app keeps the administrator's Google session separate
+                // from the anonymous voting session used by the main page.
+                const app = initializeApp(await response.json(), "admin");
+                auth = getAuth(app);
+                await auth.authStateReady();
+
+                if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                    adminUser = auth.currentUser;
+                    await authorize();
+                } else {
+                    showLogin("Přihlaste se účtem Google, který je uvedený v seznamu správců.");
+                }
+            } catch (error) {
+                console.error(error);
+                showLogin("Firebase není nakonfigurován nebo se nepodařilo načíst přihlášení.", false);
+            }
+        }
+
+        async function login() {
+            loginButton.disabled = true;
+            loginStatus.textContent = "Přihlašuji…";
+            try {
+                const result = await signInWithPopup(auth, new GoogleAuthProvider());
+                adminUser = result.user;
+                await authorize();
+            } catch (error) {
+                console.error(error);
+                showLogin("Přihlášení se nezdařilo.");
+            } finally {
+                loginButton.disabled = false;
+            }
+        }
+
+        async function authorize() {
+            const response = await adminFetch("/api/admin/me");
+            if (!response.ok) {
+                if (response.status === 403) {
+                    showLogin("Tento účet nemá oprávnění správce.");
+                } else {
+                    showLogin("Ověření oprávnění se nezdařilo.");
+                }
+                return;
+            }
+
+            const session = await response.json();
+            document.getElementById("adminEmail").textContent = session.email;
+            loginPanel.hidden = true;
+            adminPanel.hidden = false;
+            await loadEvents();
+        }
+
+        async function logout() {
+            await signOut(auth);
+            adminUser = null;
+            adminPanel.hidden = true;
+            showLogin("Byli jste odhlášeni.");
+        }
+
+        function showLogin(message, allowLogin = true) {
+            adminPanel.hidden = true;
+            loginPanel.hidden = false;
+            loginStatus.textContent = message;
+            loginButton.hidden = !allowLogin;
+        }
+
+        async function adminFetch(url, options = {}) {
+            if (!adminUser) throw new Error("Administrator is not signed in");
+            const headers = new Headers(options.headers || {});
+            headers.set("Authorization", `Bearer ${await adminUser.getIdToken()}`);
+            return fetch(url, { ...options, headers });
+        }
+
+        async function loadEvents(preferredEventId = currentEventId) {
+            const response = await adminFetch("/api/admin/events");
+            if (!response.ok) throw new Error("Could not load events");
+            events = await response.json();
+            events.sort((a, b) => {
+                if (a.archived !== b.archived) return a.archived ? 1 : -1;
+                return a.name.localeCompare(b.name, "cs");
+            });
+
+            const select = document.getElementById("adminEventSelect");
+            select.replaceChildren();
+            for (const event of events) {
+                const option = document.createElement("option");
+                option.value = event.id;
+                option.textContent = event.archived
+                    ? `${event.name} (archivováno)`
+                    : event.votingStopped
+                        ? `${event.name} (hlasování zastaveno)`
+                        : event.name;
+                select.appendChild(option);
+            }
+
+            const selectedId = events.some(event => event.id === preferredEventId)
+                ? preferredEventId
+                : events[0]?.id || "";
+            select.value = selectedId;
+            await selectAdminEvent(selectedId);
+        }
+
+        async function selectAdminEvent(eventId) {
+            currentEventId = eventId;
+            resetContestantForm();
+            const event = currentEvent();
+            const editButton = document.getElementById("editEventButton");
+            const votingStateButton = document.getElementById("votingStateButton");
+            const archiveButton = document.getElementById("archiveEventButton");
+            const rebuildResultsButton = document.getElementById("rebuildResultsButton");
+            const adminResultsLink = document.getElementById("adminResultsLink");
+            const adminVotesLink = document.getElementById("adminVotesLink");
+            editButton.disabled = !event;
+            votingStateButton.disabled = !event || event.archived;
+            archiveButton.disabled = !event || event.ballotsCleaned;
+            rebuildResultsButton.disabled =
+                !event || (!event.archived && !event.votingStopped) || event.ballotsCleaned;
+
+            if (!event) {
+                adminResultsLink.hidden = true;
+                adminVotesLink.hidden = true;
+                document.getElementById("eventMessage").textContent = "Vytvořte první událost.";
+                document.getElementById("shareLinkPanel").hidden = true;
+                document.getElementById("contestantSection").hidden = true;
+                document.getElementById("contestantListSection").hidden = true;
+                startNewEvent();
+                return;
+            }
+
+            archiveButton.textContent = event.ballotsCleaned ? "Trvale uzavřeno" : event.archived ? "Obnovit" : "Archivovat";
+            adminResultsLink.href = `/admin/event/${encodeURIComponent(event.id)}/results`;
+            adminResultsLink.hidden = false;
+            adminVotesLink.href = `/admin/event/${encodeURIComponent(event.id)}/votes`;
+            adminVotesLink.hidden = event.ballotsCleaned;
+            archiveButton.className = event.archived
+                ? "bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                : "bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700";
+            votingStateButton.textContent = event.votingStopped ? "Obnovit hlasování" : "Zastavit hlasování";
+            votingStateButton.className = event.votingStopped
+                ? "bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                : "bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700";
+            const eventStatus = [event.description || "Bez popisu"];
+            if (event.votingStopped) eventStatus.push("Hlasování je zastaveno.");
+            if (!event.resultsInitialized) eventStatus.push("Souhrnné výsledky čekají na přepočítání.");
+            if (event.resultsRebuilding) eventStatus.push("Předchozí přepočítání nebylo dokončeno; spusťte je znovu.");
+            if (event.ballotsCleaned) eventStatus.push("Hlasovací lístky byly odstraněny; zachované výsledky jsou konečné.");
+            document.getElementById("eventMessage").textContent = eventStatus.join(" · ");
+            rebuildResultsButton.title = event.ballotsCleaned
+                ? "Po odstranění hlasovacích lístků již výsledky nelze přepočítat."
+                : event.votingStopped
+                ? "Přepočítá souhrnné výsledky ze všech uložených hlasů."
+                : "Před přepočítáním nejdříve zastavte hlasování.";
+            rebuildResultsButton.className = event.resultsInitialized
+                ? "text-blue-700 hover:underline disabled:text-gray-400"
+                : "font-semibold text-amber-700 hover:underline disabled:text-gray-400";
+            resetEventForm();
+
+            const active = !event.archived;
+            const sharePanel = document.getElementById("shareLinkPanel");
+            sharePanel.hidden = !active;
+            if (active) {
+                document.getElementById("shareLink").value =
+                    `${location.origin}/event/${encodeURIComponent(event.id)}/${encodeURIComponent(event.slug)}`;
+            }
+            document.getElementById("contestantSection").hidden = !active;
+            document.getElementById("contestantListSection").hidden = false;
+            await loadContestants();
+        }
+
+        function currentEvent() {
+            return events.find(event => event.id === currentEventId);
+        }
+
+        async function copyShareLink() {
+            const link = document.getElementById("shareLink").value;
+            try {
+                await navigator.clipboard.writeText(link);
+                document.getElementById("eventMessage").textContent = "Odkaz byl zkopírován.";
+            } catch (error) {
+                console.error(error);
+                alert(`Zkopírujte tento odkaz: ${link}`);
+            }
+        }
+
+        function startNewEvent() {
+            eventForm.reset();
+            document.getElementById("eventId").value = "";
+            document.getElementById("eventShowResults").checked = true;
+            document.getElementById("eventFormTitle").textContent = "Nová událost";
+            document.getElementById("eventFormMessage").textContent = "";
+            eventForm.hidden = false;
+        }
+
+        function editCurrentEvent() {
+            const event = currentEvent();
+            if (!event) return;
+            document.getElementById("eventId").value = event.id;
+            document.getElementById("eventName").value = event.name;
+            document.getElementById("eventDescription").value = event.description || "";
+            document.getElementById("eventShowResults").checked = event.showResults;
+            document.getElementById("eventFormTitle").textContent = "Upravit událost";
+            document.getElementById("eventFormMessage").textContent = "";
+            eventForm.hidden = false;
+        }
+
+        function resetEventForm() {
+            eventForm.reset();
+            document.getElementById("eventId").value = "";
+            document.getElementById("eventFormMessage").textContent = "";
+            eventForm.hidden = true;
+        }
+
+        async function saveEvent(event) {
+            event.preventDefault();
+            const id = document.getElementById("eventId").value;
+            const existing = events.find(candidate => candidate.id === id);
+            const payload = {
+                name: document.getElementById("eventName").value.trim(),
+                description: document.getElementById("eventDescription").value.trim(),
+                archived: existing?.archived || false,
+                showResults: document.getElementById("eventShowResults").checked
+            };
+            const message = document.getElementById("eventFormMessage");
+            message.className = "text-sm text-gray-500";
+            message.textContent = "Ukládám…";
+
+            try {
+                const response = await adminFetch(
+                    id ? `/api/admin/events/${encodeURIComponent(id)}` : "/api/admin/events",
+                    {
+                        method: id ? "PUT" : "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    }
+                );
+                if (!response.ok) throw new Error("Event save failed");
+                const saved = await response.json();
+                resetEventForm();
+                await loadEvents(saved.id);
+            } catch (error) {
+                console.error(error);
+                message.className = "text-sm text-red-600";
+                message.textContent = "Událost se nepodařilo uložit.";
+            }
+        }
+
+        async function archiveOrRestoreEvent() {
+            const event = currentEvent();
+            if (!event) return;
+
+            try {
+                let response;
+                if (event.archived) {
+                    response = await adminFetch(`/api/admin/events/${encodeURIComponent(event.id)}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            name: event.name,
+                            description: event.description || "",
+                            archived: false,
+                            showResults: event.showResults
+                        })
+                    });
+                } else {
+                    if (!confirm(`Archivovat událost „${event.name}“? Hlasování bude zastaveno, data zůstanou zachována.`)) return;
+                    response = await adminFetch(`/api/admin/events/${encodeURIComponent(event.id)}`, {
+                        method: "DELETE"
+                    });
+                }
+                if (!response.ok) throw new Error("Event state change failed");
+                await loadEvents(event.id);
+            } catch (error) {
+                console.error(error);
+                alert("Stav události se nepodařilo změnit.");
+            }
+        }
+
+        async function toggleVotingState() {
+            const event = currentEvent();
+            if (!event || event.archived) return;
+            const stopped = !event.votingStopped;
+            if (stopped && !confirm(`Zastavit hlasování pro událost „${event.name}“? Již uložené hlasy zůstanou zachovány.`)) return;
+
+            const button = document.getElementById("votingStateButton");
+            button.disabled = true;
+            try {
+                const response = await adminFetch(`/api/admin/events/${encodeURIComponent(event.id)}/voting`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ stopped })
+                });
+                if (!response.ok) throw new Error("Voting state change failed");
+                await loadEvents(event.id);
+            } catch (error) {
+                console.error(error);
+                button.disabled = false;
+                alert("Stav hlasování se nepodařilo změnit.");
+            }
+        }
+
+        async function rebuildResults() {
+            const event = currentEvent();
+            if (!event || event.ballotsCleaned) return;
+            if (!event.archived && !event.votingStopped) {
+                alert("Před přepočítáním nejdříve zastavte hlasování.");
+                return;
+            }
+            if (!confirm(`Přepočítat souhrnné výsledky události „${event.name}“ ze všech uložených hlasů?`)) return;
+
+            const button = document.getElementById("rebuildResultsButton");
+            button.disabled = true;
+            try {
+                const response = await adminFetch(`/api/admin/events/${encodeURIComponent(event.id)}/results/rebuild`, {
+                    method: "POST"
+                });
+                if (!response.ok) throw new Error("Result rebuild failed");
+                await loadEvents(event.id);
+                document.getElementById("eventMessage").textContent += " · Výsledky byly přepočítány.";
+            } catch (error) {
+                console.error(error);
+                button.disabled = false;
+                alert("Výsledky se nepodařilo přepočítat.");
+            }
+        }
+
+        async function loadContestants(eventId = currentEventId) {
+            if (!eventId) return;
+            const container = document.getElementById("contestantsList");
+            container.replaceChildren(createMessage("Načítám…", "text-gray-500"));
+
+            try {
+                const response = await adminFetch(`/api/admin/events/${encodeURIComponent(eventId)}/contestants`);
+                if (!response.ok) throw new Error("Could not load contestants");
+                const loadedContestants = await response.json();
+                if (currentEventId !== eventId) return;
+                contestants = loadedContestants;
+                renderContestants();
+            } catch (error) {
+                console.error(error);
+                container.replaceChildren(createMessage("Hlasovací položky se nepodařilo načíst.", "text-red-600"));
+            }
+        }
+
+        function renderContestants() {
+            const container = document.getElementById("contestantsList");
+            container.replaceChildren();
+            if (contestants.length === 0) {
+                container.appendChild(createMessage("Zatím nejsou přidány žádné hlasovací položky.", "text-gray-500"));
+                return;
+            }
+
+            contestants
+                .sort((a, b) => a.name.localeCompare(b.name, "cs"))
+                .forEach(contestant => {
+                    const card = document.createElement("article");
+                    card.className = "bg-white p-4 rounded-xl shadow flex flex-wrap justify-between items-center gap-4";
+
+                    const details = document.createElement("div");
+                    const name = document.createElement("h3");
+                    name.className = "font-bold text-lg";
+                    name.textContent = contestant.name;
+                    const description = document.createElement("p");
+                    description.className = "text-sm text-gray-500";
+                    description.textContent = contestant.description || "Bez popisu";
+                    const result = document.createElement("p");
+                    result.className = "text-sm font-semibold text-amber-700 mt-1";
+                    result.textContent = contestant.voteCount > 0
+                        ? `Průměr ${contestant.avgScore.toFixed(1)} · ${contestant.voteCount} hlasů`
+                        : "Zatím bez hodnocení";
+                    details.append(name, description, result);
+
+                    const actions = document.createElement("div");
+                    actions.className = "flex gap-2";
+                    const editButton = document.createElement("button");
+                    editButton.className = "border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50";
+                    editButton.textContent = "Upravit";
+                    editButton.addEventListener("click", () => editContestant(contestant));
+                    const deleteButton = document.createElement("button");
+                    deleteButton.className = "bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700";
+                    deleteButton.textContent = "Odstranit";
+                    deleteButton.addEventListener("click", () => removeContestant(contestant));
+                    actions.append(editButton, deleteButton);
+
+                    card.appendChild(details);
+                    if (!currentEvent()?.archived) card.appendChild(actions);
+                    container.appendChild(card);
+                });
+        }
+
+        function editContestant(contestant) {
+            document.getElementById("contestantId").value = contestant.id;
+            document.getElementById("contestantName").value = contestant.name;
+            document.getElementById("contestantDescription").value = contestant.description || "";
+            document.getElementById("formTitle").textContent = "Upravit hlasovací položku";
+            document.getElementById("cancelEditButton").hidden = false;
+            formMessage.textContent = "";
+            contestantForm.scrollIntoView({ behavior: "smooth" });
+        }
+
+        function resetContestantForm() {
+            contestantForm.reset();
+            document.getElementById("contestantId").value = "";
+            document.getElementById("formTitle").textContent = "Přidat hlasovací položku";
+            document.getElementById("cancelEditButton").hidden = true;
+            formMessage.textContent = "";
+        }
+
+        async function saveContestant(event) {
+            event.preventDefault();
+            const id = document.getElementById("contestantId").value;
+            const payload = {
+                name: document.getElementById("contestantName").value.trim(),
+                description: document.getElementById("contestantDescription").value.trim()
+            };
+
+            formMessage.className = "text-sm text-gray-500";
+            formMessage.textContent = "Ukládám…";
+            try {
+                const response = await adminFetch(
+                    id
+                        ? `/api/admin/events/${encodeURIComponent(currentEventId)}/contestants/${encodeURIComponent(id)}`
+                        : `/api/admin/events/${encodeURIComponent(currentEventId)}/contestants`,
+                    {
+                        method: id ? "PUT" : "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    }
+                );
+                if (!response.ok) throw new Error("Save failed");
+
+                resetContestantForm();
+                formMessage.className = "text-sm text-green-700";
+                formMessage.textContent = "Uloženo.";
+                await loadContestants();
+            } catch (error) {
+                console.error(error);
+                formMessage.className = "text-sm text-red-600";
+                formMessage.textContent = "Uložení se nezdařilo.";
+            }
+        }
+
+        async function removeContestant(contestant) {
+            if (!confirm(`Opravdu odstranit „${contestant.name}“?`)) return;
+            try {
+                const response = await adminFetch(
+                    `/api/admin/events/${encodeURIComponent(currentEventId)}/contestants/${encodeURIComponent(contestant.id)}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+                if (!response.ok) throw new Error("Delete failed");
+                await loadContestants();
+            } catch (error) {
+                console.error(error);
+                alert("Odstranění se nezdařilo.");
+            }
+        }
+
+        function createMessage(text, className) {
+            const message = document.createElement("p");
+            message.className = className;
+            message.textContent = text;
+            return message;
+        }
+    </script>
+</body>
+</html>

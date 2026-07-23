@@ -1,0 +1,16 @@
+.gcloudignore
+.git
+.gitignore
+.firebase
+.firebaserc
+.env
+.env.*
+functions
+node_modules
+blavoter
+server
+*.test
+coverage.out
+firebase-debug.log
+firebase-debug.*.log
+.DS_Store
