@@ -25,6 +25,7 @@ coverage.out
 
 # Agent worktrees
 .worktrees/
+.superpowers/
 
 # Operating system files
 .DS_Store
