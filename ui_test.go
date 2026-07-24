@@ -133,3 +133,14 @@ func TestVoteMatrixKeepsNamedStickyColumns(t *testing.T) {
 		`scoreCell.className = "matrix-score"`,
 	)
 }
+
+func TestThemeRetainsMobileAndInteractionRequirements(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	requireUIContains(t, css,
+		"min-height: 2.5rem",
+		".vote-choice--selected",
+		"border: 2px solid",
+		"@media (max-width: 390px)",
+		"@media (prefers-reduced-motion: reduce)",
+	)
+}
