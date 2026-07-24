@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Načítám událost…</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/theme.css">
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans p-4 max-w-2xl mx-auto">
+<body class="app-page"><div class="app-shell">
 
     <header class="text-center my-6">
         <div class="flex justify-end gap-4 mb-2">
@@ -29,6 +30,7 @@
     </div>
     <p id="saveStatus" class="mt-4 min-h-5 text-center text-sm text-gray-500" role="status" aria-live="polite"></p>
 
+    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";

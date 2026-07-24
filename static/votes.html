@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hlasy uživatelů</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/theme.css">
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans p-4 max-w-screen-2xl mx-auto">
+<body class="app-page"><div class="app-shell app-shell--wide">
     <header class="my-6">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
             <a href="/admin" class="text-amber-700 hover:underline">← Zpět do administrace</a>
@@ -45,6 +46,7 @@
         </nav>
     </main>
 
+    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";

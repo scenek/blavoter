@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uživatelský profil – Degustační soutěž</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/theme.css">
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans p-4 max-w-lg mx-auto">
+<body class="app-page"><div class="app-shell app-shell--narrow">
     <header class="my-6">
         <a id="backLink" href="/" class="text-amber-700 hover:underline">← Zpět k hlasování</a>
         <h1 class="text-3xl font-bold text-amber-600 mt-4">Uživatelský profil</h1>
@@ -28,6 +29,7 @@
         </form>
     </main>
 
+    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAuth, signInAnonymously, signOut } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
