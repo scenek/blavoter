@@ -8,39 +8,39 @@
     <link rel="stylesheet" href="/static/theme.css">
 </head>
 <body class="app-page"><div class="app-shell app-shell--wide">
-    <header class="my-6">
+    <header class="app-header">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <a href="/admin" class="text-amber-700 hover:underline">← Zpět do administrace</a>
+            <a href="/admin" class="app-link">← Zpět do administrace</a>
             <div class="flex items-center gap-4">
-                <a id="resultsLink" href="#" class="text-amber-700 hover:underline">Souhrnné výsledky</a>
-                <button id="refreshButton" type="button" class="text-blue-700 hover:underline">Obnovit</button>
+                <a id="resultsLink" href="#" class="app-link">Souhrnné výsledky</a>
+                <button id="refreshButton" type="button" class="button button--secondary">Obnovit</button>
             </div>
         </div>
-        <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Hlasy uživatelů</p>
-        <h1 id="eventName" class="text-3xl font-bold text-amber-600">Načítám…</h1>
-        <p id="summary" class="mt-1 text-sm text-gray-500">
+        <p class="eyebrow">Hlasy uživatelů</p>
+        <h1 id="eventName" class="display-heading text-3xl">Načítám…</h1>
+        <p id="summary" class="muted mt-1 text-sm">
             Načítám jednotlivé hlasovací lístky…
         </p>
     </header>
 
     <main>
-        <p id="message" class="rounded-xl bg-white p-5 text-center text-gray-500 shadow" role="status">
+        <p id="message" class="notice p-5 text-center" role="status">
             Načítám hlasy…
         </p>
-        <div id="tablePanel" hidden class="max-h-[70vh] overflow-auto rounded-xl bg-white shadow">
-            <table class="min-w-full border-collapse text-sm">
-                <thead id="votesHead" class="bg-amber-50"></thead>
-                <tbody id="votesBody" class="divide-y divide-gray-200"></tbody>
+        <div id="tablePanel" hidden class="matrix-panel panel panel--cut">
+            <table class="vote-matrix">
+                <thead id="votesHead"></thead>
+                <tbody id="votesBody"></tbody>
             </table>
         </div>
-        <nav id="pagination" hidden class="mt-4 flex items-center justify-center gap-4" aria-label="Stránkování uživatelů">
+        <nav id="pagination" hidden class="pagination" aria-label="Stránkování uživatelů">
             <button id="previousPage" type="button"
-                    class="rounded-lg bg-white px-4 py-2 font-semibold text-blue-700 shadow disabled:cursor-not-allowed disabled:text-gray-300">
+                    class="button button--secondary">
                 ← Předchozí
             </button>
-            <span id="pageLabel" class="text-sm text-gray-600"></span>
+            <span id="pageLabel" class="muted text-sm"></span>
             <button id="nextPage" type="button"
-                    class="rounded-lg bg-white px-4 py-2 font-semibold text-blue-700 shadow disabled:cursor-not-allowed disabled:text-gray-300">
+                    class="button button--secondary">
                 Další →
             </button>
         </nav>
@@ -118,7 +118,7 @@
         async function loadVotes() {
             const message = document.getElementById("message");
             message.hidden = false;
-            message.className = "rounded-xl bg-white p-5 text-center text-gray-500 shadow";
+            message.className = "notice p-5 text-center";
             message.textContent = "Načítám hlasy…";
             document.getElementById("tablePanel").hidden = true;
             document.getElementById("pagination").hidden = true;
@@ -170,15 +170,13 @@
             const headRow = document.createElement("tr");
             const userHeading = document.createElement("th");
             userHeading.scope = "col";
-            userHeading.className =
-                "sticky left-0 top-0 z-30 min-w-52 border-b border-r bg-amber-50 px-4 py-3 text-left font-bold";
+            userHeading.className = "matrix-heading matrix-user";
             userHeading.textContent = "Uživatel";
             headRow.appendChild(userHeading);
             for (const option of options) {
                 const heading = document.createElement("th");
                 heading.scope = "col";
-                heading.className =
-                    "sticky top-0 z-20 min-w-36 border-b bg-amber-50 px-3 py-3 text-center align-bottom font-semibold";
+                heading.className = "matrix-heading";
                 heading.textContent = option.name || "Položka bez názvu";
                 heading.title = option.name || "Položka bez názvu";
                 headRow.appendChild(heading);
@@ -190,17 +188,15 @@
             let submittedVotes = 0;
             voters.forEach((voter, index) => {
                 const row = document.createElement("tr");
-                const rowBackground = index % 2 === 0 ? "bg-white" : "bg-gray-50";
-                row.className = `${rowBackground} hover:bg-amber-50`;
+                row.className = "matrix-row";
 
                 const userCell = document.createElement("th");
                 userCell.scope = "row";
-                userCell.className =
-                    `sticky left-0 z-10 min-w-52 border-r px-4 py-3 text-left font-semibold ${rowBackground}`;
+                userCell.className = "matrix-user matrix-user--body";
                 const nickname = document.createElement("span");
                 nickname.textContent = voter.nickname || `Uživatel ${index + 1}`;
                 const identifier = document.createElement("small");
-                identifier.className = "ml-2 font-mono font-normal text-gray-400";
+                identifier.className = "ml-2 font-mono font-normal muted";
                 identifier.textContent = `#${String(voter.voterId || "").slice(0, 8)}`;
                 identifier.title = voter.voterId || "";
                 userCell.append(nickname, identifier);
@@ -208,14 +204,13 @@
 
                 for (const option of options) {
                     const scoreCell = document.createElement("td");
-                    scoreCell.className = "min-w-36 px-3 py-3 text-center tabular-nums";
+                    scoreCell.className = "matrix-score";
                     if (Object.prototype.hasOwnProperty.call(voter.scores || {}, option.id)) {
                         scoreCell.textContent = String(voter.scores[option.id]);
-                        scoreCell.className += " font-bold text-amber-800";
                         submittedVotes++;
                     } else {
                         scoreCell.textContent = "—";
-                        scoreCell.className += " text-gray-300";
+                        scoreCell.classList.add("matrix-score--empty");
                     }
                     row.appendChild(scoreCell);
                 }
@@ -230,7 +225,7 @@
             const message = document.getElementById("message");
             if (voters.length === 0) {
                 message.hidden = false;
-                message.className = "rounded-xl bg-white p-5 text-center text-gray-500 shadow";
+                message.className = "notice p-5 text-center";
                 message.textContent = "Zatím nejsou uložené žádné hlasovací lístky.";
                 document.getElementById("tablePanel").hidden = true;
                 document.getElementById("pagination").hidden = pageIndex === 0;
@@ -244,12 +239,12 @@
         function showError(text, includeAdminLink = false) {
             const message = document.getElementById("message");
             message.hidden = false;
-            message.className = "rounded-xl bg-red-50 p-5 text-center text-red-700 shadow";
+            message.className = "notice notice--error p-5 text-center";
             message.replaceChildren(document.createTextNode(text));
             if (includeAdminLink) {
                 const link = document.createElement("a");
                 link.href = "/admin";
-                link.className = "mt-3 block font-semibold underline";
+                link.className = "app-link mt-3 block";
                 link.textContent = "Otevřít administraci";
                 message.appendChild(link);
             }

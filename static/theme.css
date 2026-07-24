@@ -230,6 +230,48 @@ button, a { -webkit-tap-highlight-color: transparent; }
     .admin-grid--forms { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
+.matrix-panel { max-height: 70vh; overflow: auto; }
+.vote-matrix { border-collapse: separate; border-spacing: 0; min-width: 100%; }
+.matrix-heading {
+    background: #2b251f;
+    border-bottom: 1px solid var(--color-copper);
+    color: var(--color-text);
+    min-width: 9rem;
+    padding: .8rem;
+    position: sticky;
+    text-align: center;
+    top: 0;
+    vertical-align: bottom;
+    z-index: 20;
+}
+.matrix-user {
+    left: 0;
+    min-width: 13rem;
+    position: sticky;
+    text-align: left;
+}
+.matrix-heading.matrix-user { border-right: 1px solid var(--color-border); z-index: 30; }
+.matrix-row { background: var(--color-surface); }
+.matrix-row:nth-child(even) { background: #2a251f; }
+.matrix-row:hover { background: #352d24; }
+.matrix-user--body {
+    background: inherit;
+    border-right: 1px solid var(--color-border);
+    padding: .75rem 1rem;
+    z-index: 10;
+}
+.matrix-score {
+    border-bottom: 1px solid rgb(81 70 58 / 55%);
+    color: var(--color-amber);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    min-width: 9rem;
+    padding: .75rem;
+    text-align: center;
+}
+.matrix-score--empty { color: #74695d; font-weight: 400; }
+.pagination { align-items: center; display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
+
 :focus-visible {
     outline: 2px solid var(--color-amber);
     outline-offset: 2px;

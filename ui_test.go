@@ -121,3 +121,15 @@ func TestAdministrationUsesDarkSemanticControls(t *testing.T) {
 		`deleteButton.className = "button button--danger"`,
 	)
 }
+
+func TestVoteMatrixKeepsNamedStickyColumns(t *testing.T) {
+	body := readUIFile(t, "static/votes.html")
+	requireUIContains(t, body,
+		`class="matrix-panel panel panel--cut"`,
+		`class="vote-matrix"`,
+		`userHeading.className = "matrix-heading matrix-user"`,
+		`heading.textContent = option.name || "Položka bez názvu"`,
+		`userCell.className = "matrix-user matrix-user--body"`,
+		`scoreCell.className = "matrix-score"`,
+	)
+}
