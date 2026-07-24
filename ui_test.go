@@ -90,3 +90,22 @@ func TestSaveStatusRetainsSharedThemeAcrossRuntimeStates(t *testing.T) {
 		`status.className = "status-text mt-4 min-h-5 text-center text-sm text-red-600"`,
 	)
 }
+
+func TestSimplePublicPagesUseSemanticThemeComponents(t *testing.T) {
+	landing := readUIFile(t, "static/landing.html")
+	requireUIContains(t, landing, `class="empty-state panel panel--cut"`, `class="app-link"`)
+
+	profile := readUIFile(t, "static/profile.html")
+	requireUIContains(t, profile,
+		`class="profile-card panel panel--cut"`,
+		`class="field w-full`,
+		`class="button button--positive"`,
+	)
+
+	results := readUIFile(t, "static/results.html")
+	requireUIContains(t, results,
+		`row.className = "result-row panel panel--cut"`,
+		`rankElement.className = "result-row__rank"`,
+		`values.className = "result-row__values"`,
+	)
+}

@@ -173,6 +173,45 @@ button, a { -webkit-tap-highlight-color: transparent; }
     .ballot-card__result { min-width: 4.5rem; padding-left: .6rem; }
 }
 
+.empty-state { padding: 2rem; text-align: center; }
+.profile-card { padding: 1.25rem; }
+.results-list { display: grid; gap: .7rem; }
+.result-row {
+    align-items: center;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 1rem;
+}
+.result-row__rank {
+    align-items: center;
+    background: var(--color-inset);
+    border: 1px solid var(--color-copper);
+    border-radius: 2px 10px 2px 10px;
+    color: var(--color-amber);
+    display: inline-flex;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    height: 2.5rem;
+    justify-content: center;
+    width: 2.5rem;
+}
+.result-row:nth-child(1) .result-row__rank { background: var(--color-copper); color: #17110c; }
+.result-row__details { min-width: 0; }
+.result-row__values {
+    border-left: 1px solid var(--color-border);
+    min-width: 6rem;
+    padding-left: .9rem;
+    text-align: right;
+}
+.result-row__average { color: var(--color-amber); font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; }
+.result-row__count { color: var(--color-muted); font-size: .75rem; }
+@media (max-width: 390px) {
+    .result-row { gap: .6rem; padding: .8rem; }
+    .result-row__values { min-width: 4.8rem; padding-left: .55rem; }
+}
+
 :focus-visible {
     outline: 2px solid var(--color-amber);
     outline-offset: 2px;

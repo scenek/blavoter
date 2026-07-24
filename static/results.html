@@ -8,21 +8,21 @@
     <link rel="stylesheet" href="/static/theme.css">
 </head>
 <body class="app-page"><div class="app-shell">
-    <header class="my-6">
+    <header class="app-header">
         <div class="flex items-center justify-between gap-3 mb-4">
-            <a id="backLink" href="/" class="text-amber-700 hover:underline">← Zpět</a>
-            <button id="refreshButton" type="button" class="text-amber-700 hover:underline">Obnovit</button>
+            <a id="backLink" href="/" class="app-link">← Zpět</a>
+            <button id="refreshButton" type="button" class="app-link">Obnovit</button>
         </div>
-        <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Výsledky</p>
-        <h1 id="eventName" class="text-3xl font-bold text-amber-600">Načítám…</h1>
-        <p class="mt-1 text-sm text-gray-500">Pořadí podle průměrného hodnocení.</p>
+        <p class="eyebrow">Výsledky</p>
+        <h1 id="eventName" class="display-heading text-3xl">Načítám…</h1>
+        <p class="muted mt-1 text-sm">Pořadí podle průměrného hodnocení.</p>
     </header>
 
     <main>
-        <p id="message" class="rounded-xl bg-white p-5 text-center text-gray-500 shadow" role="status">
+        <p id="message" class="notice p-5 text-center" role="status">
             Načítám výsledky…
         </p>
-        <ol id="resultsList" hidden class="space-y-3"></ol>
+        <ol id="resultsList" hidden class="results-list"></ol>
     </main>
 
     </div>
@@ -89,7 +89,7 @@
             const message = document.getElementById("message");
             const list = document.getElementById("resultsList");
             message.hidden = false;
-            message.className = "rounded-xl bg-white p-5 text-center text-gray-500 shadow";
+            message.className = "notice p-5 text-center";
             message.textContent = "Načítám výsledky…";
             list.hidden = true;
 
@@ -146,7 +146,7 @@
             list.replaceChildren();
             if (results.length === 0) {
                 const empty = document.createElement("li");
-                empty.className = "rounded-xl bg-white p-5 text-center text-gray-500 shadow";
+                empty.className = "notice p-5 text-center";
                 empty.textContent = "Událost zatím nemá žádné hlasovací položky.";
                 list.appendChild(empty);
             } else {
@@ -158,31 +158,31 @@
 
         function createResultRow(result, rank) {
             const row = document.createElement("li");
-            row.className = "flex items-center gap-4 rounded-xl bg-white p-4 shadow";
+            row.className = "result-row panel panel--cut";
 
             const rankElement = document.createElement("span");
-            rankElement.className = "flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-lg font-bold text-amber-800";
+            rankElement.className = "result-row__rank";
             rankElement.textContent = String(rank);
 
             const details = document.createElement("div");
-            details.className = "min-w-0 grow";
+            details.className = "result-row__details";
             const name = document.createElement("h2");
             name.className = "font-bold";
             name.textContent = result.name;
             const description = document.createElement("p");
-            description.className = "text-sm text-gray-500";
+            description.className = "muted text-sm";
             description.textContent = result.description || "";
             details.append(name, description);
 
             const values = document.createElement("div");
-            values.className = "shrink-0 text-right";
+            values.className = "result-row__values";
             const average = document.createElement("p");
-            average.className = "text-xl font-bold text-amber-700";
+            average.className = "result-row__average";
             average.textContent = result.voteCount > 0
                 ? Number(result.avgScore).toLocaleString("cs-CZ", {minimumFractionDigits: 1, maximumFractionDigits: 1})
                 : "—";
             const count = document.createElement("p");
-            count.className = "text-xs text-gray-500";
+            count.className = "result-row__count";
             count.textContent = `Počet hlasů: ${result.voteCount}`;
             values.append(average, count);
 
@@ -193,7 +193,7 @@
         function showError(text, link) {
             const message = document.getElementById("message");
             message.hidden = false;
-            message.className = "rounded-xl bg-red-50 p-5 text-center text-red-700 shadow";
+            message.className = "notice notice--error p-5 text-center";
             message.replaceChildren(document.createTextNode(text));
             if (link) {
                 const anchor = document.createElement("a");

@@ -8,24 +8,24 @@
     <link rel="stylesheet" href="/static/theme.css">
 </head>
 <body class="app-page"><div class="app-shell app-shell--narrow">
-    <header class="my-6">
-        <a id="backLink" href="/" class="text-amber-700 hover:underline">← Zpět k hlasování</a>
-        <h1 class="text-3xl font-bold text-amber-600 mt-4">Uživatelský profil</h1>
-        <p id="eventName" class="text-gray-500"></p>
+    <header class="app-header">
+        <a id="backLink" href="/" class="app-link">← Zpět k hlasování</a>
+        <h1 class="display-heading text-3xl mt-4">Uživatelský profil</h1>
+        <p id="eventName" class="muted"></p>
     </header>
 
-    <main class="bg-white p-5 rounded-xl shadow">
+    <main class="profile-card panel panel--cut">
         <form id="profileForm" class="space-y-4">
             <div>
                 <label for="nickname" class="block text-sm font-semibold mb-1">Tvoje přezdívka</label>
                 <input id="nickname" required maxlength="80" autocomplete="nickname"
-                    class="w-full border p-2 rounded-lg focus:outline-amber-500">
+                    class="field w-full border p-2">
             </div>
             <button id="saveButton" type="submit"
-                class="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-700">
+                class="button button--positive">
                 Uložit přezdívku
             </button>
-            <p id="message" class="text-sm" role="status"></p>
+            <p id="message" class="status-text text-sm" role="status"></p>
         </form>
     </main>
 
