@@ -8,105 +8,105 @@
     <link rel="stylesheet" href="/static/theme.css">
 </head>
 <body class="app-page"><div class="app-shell app-shell--wide">
-    <header class="flex flex-wrap items-center justify-between gap-3 my-6">
+    <header class="app-header flex flex-wrap items-center justify-between gap-3">
         <div>
-            <h1 class="text-3xl font-bold text-amber-600">Administrace soutěže</h1>
-            <p class="text-sm text-gray-500">Správa událostí, hlasovacích položek a výsledků</p>
+            <h1 class="display-heading text-3xl">Administrace soutěže</h1>
+            <p class="muted text-sm">Správa událostí, hlasovacích položek a výsledků</p>
         </div>
-        <a href="/" class="text-amber-700 hover:underline">Zpět k hlasování</a>
+        <a href="/" class="app-link">Zpět k hlasování</a>
     </header>
 
-    <section id="loginPanel" class="bg-white p-6 rounded-xl shadow text-center">
-        <p id="loginStatus" class="mb-4 text-gray-600">Načítám přihlášení…</p>
-        <button id="loginButton" hidden class="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700">
+    <section id="loginPanel" class="admin-section panel panel--cut text-center">
+        <p id="loginStatus" class="status-text mb-4">Načítám přihlášení…</p>
+        <button id="loginButton" hidden class="button button--primary">
             Přihlásit přes Google
         </button>
     </section>
 
-    <main id="adminPanel" hidden>
-        <div class="bg-white p-4 rounded-xl shadow mb-6 flex flex-wrap justify-between items-center gap-3">
+    <main id="adminPanel" hidden class="admin-grid">
+        <div class="admin-toolbar panel panel--cut p-4 justify-between">
             <p>Přihlášený správce: <strong id="adminEmail"></strong></p>
-            <button id="logoutButton" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50">Odhlásit</button>
+            <button id="logoutButton" class="button button--secondary">Odhlásit</button>
         </div>
 
-        <section class="bg-white p-5 rounded-xl shadow mb-6">
-            <h2 class="text-xl font-bold mb-4">Události</h2>
-            <div class="flex flex-wrap gap-2 mb-4">
-                <select id="adminEventSelect" class="grow border p-2 rounded-lg"></select>
-                <button id="newEventButton" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Nová událost</button>
-                <button id="editEventButton" class="border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50">Upravit</button>
-                <a id="adminResultsLink" hidden class="border border-amber-500 text-amber-700 px-4 py-2 rounded-lg hover:bg-amber-50">Výsledky</a>
-                <a id="adminVotesLink" hidden class="border border-blue-500 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50">Hlasy uživatelů</a>
-                <button id="votingStateButton" class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700">Zastavit hlasování</button>
-                <button id="archiveEventButton" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Archivovat</button>
+        <section class="admin-section panel panel--cut">
+            <h2 class="display-heading text-xl mb-4">Události</h2>
+            <div class="admin-toolbar mb-4">
+                <select id="adminEventSelect" class="field grow p-2"></select>
+                <button id="newEventButton" class="button button--positive">Nová událost</button>
+                <button id="editEventButton" class="button button--secondary">Upravit</button>
+                <a id="adminResultsLink" hidden class="button button--secondary">Výsledky</a>
+                <a id="adminVotesLink" hidden class="button button--secondary">Hlasy uživatelů</a>
+                <button id="votingStateButton" class="button button--danger">Zastavit hlasování</button>
+                <button id="archiveEventButton" class="button button--danger">Archivovat</button>
             </div>
 
-            <form id="eventForm" hidden class="space-y-4 border-t pt-4">
+            <form id="eventForm" hidden class="space-y-4 border-t pt-4 admin-divider">
                 <input id="eventId" type="hidden">
-                <h3 id="eventFormTitle" class="font-bold">Nová událost</h3>
+                <h3 id="eventFormTitle" class="display-heading">Nová událost</h3>
                 <div>
                     <label for="eventName" class="block text-sm font-semibold mb-1">Název události</label>
-                    <input id="eventName" required maxlength="100" class="w-full border p-2 rounded-lg focus:outline-amber-500">
+                    <input id="eventName" required maxlength="100" class="field w-full p-2">
                 </div>
                 <div>
                     <label for="eventDescription" class="block text-sm font-semibold mb-1">Popis</label>
-                    <textarea id="eventDescription" maxlength="500" rows="3" class="w-full border p-2 rounded-lg focus:outline-amber-500"></textarea>
+                    <textarea id="eventDescription" maxlength="500" rows="3" class="field w-full p-2"></textarea>
                 </div>
                 <label class="flex items-center gap-2">
                     <input id="eventShowResults" type="checkbox" class="size-4">
                     <span>Zobrazit hlasujícím počet hlasů a průměrné hodnocení</span>
                 </label>
-                <div class="flex gap-2">
-                    <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-700">Uložit událost</button>
-                    <button id="cancelEventButton" type="button" class="border border-gray-300 px-5 py-2 rounded-lg hover:bg-gray-50">Zrušit</button>
+                <div class="admin-toolbar">
+                    <button type="submit" class="button button--positive">Uložit událost</button>
+                    <button id="cancelEventButton" type="button" class="button button--secondary">Zrušit</button>
                 </div>
-                <p id="eventFormMessage" class="text-sm" role="status"></p>
+                <p id="eventFormMessage" class="status-text text-sm" role="status"></p>
             </form>
-            <p id="eventMessage" class="text-sm text-gray-500"></p>
-            <div id="shareLinkPanel" hidden class="mt-4 border-t pt-4">
+            <p id="eventMessage" class="status-text text-sm"></p>
+            <div id="shareLinkPanel" hidden class="mt-4 border-t pt-4 admin-divider">
                 <label for="shareLink" class="block text-sm font-semibold mb-1">Odkaz pro hlasující</label>
-                <div class="flex flex-wrap gap-2">
-                    <input id="shareLink" readonly class="grow border p-2 rounded-lg bg-gray-50">
-                    <button id="copyShareLinkButton" class="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600">
+                <div class="admin-toolbar">
+                    <input id="shareLink" readonly class="field grow p-2">
+                    <button id="copyShareLinkButton" class="button button--primary">
                         Kopírovat odkaz
                     </button>
                 </div>
             </div>
         </section>
 
-        <section id="contestantSection" hidden class="bg-white p-5 rounded-xl shadow mb-6">
-            <h2 id="formTitle" class="text-xl font-bold mb-4">Přidat hlasovací položku</h2>
+        <section id="contestantSection" hidden class="admin-section panel panel--cut">
+            <h2 id="formTitle" class="display-heading text-xl mb-4">Přidat hlasovací položku</h2>
             <form id="contestantForm" class="space-y-4">
                 <input id="contestantId" type="hidden">
                 <div>
                     <label for="contestantName" class="block text-sm font-semibold mb-1">Název hlasovací položky</label>
-                    <input id="contestantName" required maxlength="100" class="w-full border p-2 rounded-lg focus:outline-amber-500">
+                    <input id="contestantName" required maxlength="100" class="field w-full p-2">
                 </div>
                 <div>
                     <label for="contestantDescription" class="block text-sm font-semibold mb-1">Popis</label>
-                    <textarea id="contestantDescription" maxlength="500" rows="3" class="w-full border p-2 rounded-lg focus:outline-amber-500"></textarea>
+                    <textarea id="contestantDescription" maxlength="500" rows="3" class="field w-full p-2"></textarea>
                 </div>
-                <div class="flex gap-2">
-                    <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-green-700">
+                <div class="admin-toolbar">
+                    <button type="submit" class="button button--positive">
                         Uložit
                     </button>
-                    <button id="cancelEditButton" type="button" hidden class="border border-gray-300 px-5 py-2 rounded-lg hover:bg-gray-50">
+                    <button id="cancelEditButton" type="button" hidden class="button button--secondary">
                         Zrušit úpravu
                     </button>
                 </div>
-                <p id="formMessage" class="text-sm" role="status"></p>
+                <p id="formMessage" class="status-text text-sm" role="status"></p>
             </form>
         </section>
 
-        <section id="contestantListSection" hidden>
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <h2 class="text-xl font-bold">Hlasovací položky a výsledky</h2>
-                <div class="flex items-center gap-3">
-                    <button id="rebuildResultsButton" class="text-blue-700 hover:underline">Přepočítat výsledky</button>
-                    <button id="refreshButton" class="text-amber-700 hover:underline">Obnovit</button>
+        <section id="contestantListSection" hidden class="admin-section panel panel--cut">
+            <div class="admin-toolbar justify-between mb-3">
+                <h2 class="display-heading text-xl">Hlasovací položky a výsledky</h2>
+                <div class="admin-toolbar">
+                    <button id="rebuildResultsButton" class="button button--primary">Přepočítat výsledky</button>
+                    <button id="refreshButton" class="button button--secondary">Obnovit</button>
                 </div>
             </div>
-            <div id="contestantsList" class="space-y-3"></div>
+            <div id="contestantsList" class="admin-grid"></div>
         </section>
     </main>
 
@@ -289,12 +289,12 @@
             adminVotesLink.href = `/admin/event/${encodeURIComponent(event.id)}/votes`;
             adminVotesLink.hidden = event.ballotsCleaned;
             archiveButton.className = event.archived
-                ? "bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                : "bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700";
+                ? "button button--positive"
+                : "button button--danger";
             votingStateButton.textContent = event.votingStopped ? "Obnovit hlasování" : "Zastavit hlasování";
             votingStateButton.className = event.votingStopped
-                ? "bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                : "bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700";
+                ? "button button--positive"
+                : "button button--danger";
             const eventStatus = [event.description || "Bez popisu"];
             if (event.votingStopped) eventStatus.push("Hlasování je zastaveno.");
             if (!event.resultsInitialized) eventStatus.push("Souhrnné výsledky čekají na přepočítání.");
@@ -307,8 +307,8 @@
                 ? "Přepočítá souhrnné výsledky ze všech uložených hlasů."
                 : "Před přepočítáním nejdříve zastavte hlasování.";
             rebuildResultsButton.className = event.resultsInitialized
-                ? "text-blue-700 hover:underline disabled:text-gray-400"
-                : "font-semibold text-amber-700 hover:underline disabled:text-gray-400";
+                ? "button button--secondary"
+                : "button button--primary";
             resetEventForm();
 
             const active = !event.archived;
@@ -377,7 +377,7 @@
                 showResults: document.getElementById("eventShowResults").checked
             };
             const message = document.getElementById("eventFormMessage");
-            message.className = "text-sm text-gray-500";
+            message.className = "status-text text-sm";
             message.textContent = "Ukládám…";
 
             try {
@@ -395,7 +395,7 @@
                 await loadEvents(saved.id);
             } catch (error) {
                 console.error(error);
-                message.className = "text-sm text-red-600";
+                message.className = "notice notice--error text-sm p-3";
                 message.textContent = "Událost se nepodařilo uložit.";
             }
         }
@@ -482,7 +482,7 @@
         async function loadContestants(eventId = currentEventId) {
             if (!eventId) return;
             const container = document.getElementById("contestantsList");
-            container.replaceChildren(createMessage("Načítám…", "text-gray-500"));
+            container.replaceChildren(createMessage("Načítám…", "status-text"));
 
             try {
                 const response = await adminFetch(`/api/admin/events/${encodeURIComponent(eventId)}/contestants`);
@@ -493,7 +493,7 @@
                 renderContestants();
             } catch (error) {
                 console.error(error);
-                container.replaceChildren(createMessage("Hlasovací položky se nepodařilo načíst.", "text-red-600"));
+                container.replaceChildren(createMessage("Hlasovací položky se nepodařilo načíst.", "notice notice--error p-3"));
             }
         }
 
@@ -501,7 +501,7 @@
             const container = document.getElementById("contestantsList");
             container.replaceChildren();
             if (contestants.length === 0) {
-                container.appendChild(createMessage("Zatím nejsou přidány žádné hlasovací položky.", "text-gray-500"));
+                container.appendChild(createMessage("Zatím nejsou přidány žádné hlasovací položky.", "status-text"));
                 return;
             }
 
@@ -509,30 +509,31 @@
                 .sort((a, b) => a.name.localeCompare(b.name, "cs"))
                 .forEach(contestant => {
                     const card = document.createElement("article");
-                    card.className = "bg-white p-4 rounded-xl shadow flex flex-wrap justify-between items-center gap-4";
+                    card.className = "admin-card panel panel--cut";
 
                     const details = document.createElement("div");
+                    details.className = "admin-card__details";
                     const name = document.createElement("h3");
                     name.className = "font-bold text-lg";
                     name.textContent = contestant.name;
                     const description = document.createElement("p");
-                    description.className = "text-sm text-gray-500";
+                    description.className = "muted text-sm";
                     description.textContent = contestant.description || "Bez popisu";
                     const result = document.createElement("p");
-                    result.className = "text-sm font-semibold text-amber-700 mt-1";
+                    result.className = "eyebrow mt-1";
                     result.textContent = contestant.voteCount > 0
                         ? `Průměr ${contestant.avgScore.toFixed(1)} · ${contestant.voteCount} hlasů`
                         : "Zatím bez hodnocení";
                     details.append(name, description, result);
 
                     const actions = document.createElement("div");
-                    actions.className = "flex gap-2";
+                    actions.className = "admin-card__actions";
                     const editButton = document.createElement("button");
-                    editButton.className = "border border-gray-300 px-3 py-1.5 rounded-lg hover:bg-gray-50";
+                    editButton.className = "button button--secondary";
                     editButton.textContent = "Upravit";
                     editButton.addEventListener("click", () => editContestant(contestant));
                     const deleteButton = document.createElement("button");
-                    deleteButton.className = "bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-red-700";
+                    deleteButton.className = "button button--danger";
                     deleteButton.textContent = "Odstranit";
                     deleteButton.addEventListener("click", () => removeContestant(contestant));
                     actions.append(editButton, deleteButton);
@@ -569,7 +570,7 @@
                 description: document.getElementById("contestantDescription").value.trim()
             };
 
-            formMessage.className = "text-sm text-gray-500";
+            formMessage.className = "status-text text-sm";
             formMessage.textContent = "Ukládám…";
             try {
                 const response = await adminFetch(
@@ -585,12 +586,12 @@
                 if (!response.ok) throw new Error("Save failed");
 
                 resetContestantForm();
-                formMessage.className = "text-sm text-green-700";
+                formMessage.className = "notice notice--success text-sm p-3";
                 formMessage.textContent = "Uloženo.";
                 await loadContestants();
             } catch (error) {
                 console.error(error);
-                formMessage.className = "text-sm text-red-600";
+                formMessage.className = "notice notice--error text-sm p-3";
                 formMessage.textContent = "Uložení se nezdařilo.";
             }
         }

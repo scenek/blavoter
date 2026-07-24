@@ -212,6 +212,24 @@ button, a { -webkit-tap-highlight-color: transparent; }
     .result-row__values { min-width: 4.8rem; padding-left: .55rem; }
 }
 
+.admin-toolbar { align-items: center; display: flex; flex-wrap: wrap; gap: .55rem; }
+.admin-grid { display: grid; gap: 1rem; }
+.admin-section { padding: 1.25rem; }
+.admin-card {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 1rem;
+}
+.admin-card__details { flex: 1 1 18rem; min-width: 0; }
+.admin-card__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.admin-divider { border-color: var(--color-border); }
+@media (min-width: 960px) {
+    .admin-grid--forms { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
 :focus-visible {
     outline: 2px solid var(--color-amber);
     outline-offset: 2px;

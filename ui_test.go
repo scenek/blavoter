@@ -109,3 +109,15 @@ func TestSimplePublicPagesUseSemanticThemeComponents(t *testing.T) {
 		`values.className = "result-row__values"`,
 	)
 }
+
+func TestAdministrationUsesDarkSemanticControls(t *testing.T) {
+	body := readUIFile(t, "static/admin.html")
+	requireUIContains(t, body,
+		`class="admin-toolbar`,
+		`class="admin-section panel panel--cut`,
+		`card.className = "admin-card panel panel--cut"`,
+		`actions.className = "admin-card__actions"`,
+		`editButton.className = "button button--secondary"`,
+		`deleteButton.className = "button button--danger"`,
+	)
+}
