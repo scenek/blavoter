@@ -12,6 +12,7 @@ per event.
 - A Google Cloud project with Firestore in Native mode
 - A Firebase project connected to the same Google Cloud project
 - Firebase Authentication with Anonymous and Google sign-in enabled
+- Firebase Hosting enabled for the project
 - Google Cloud CLI and Firebase CLI for deployment
 - Docker for local container validation
 
@@ -22,7 +23,8 @@ per event.
 2. Register a Firebase web app for the project and copy its web configuration.
 3. Open **Authentication → Settings → Authorized domains** and add every host
    that serves the application. Keep `localhost` for local development and add
-   the hostname of the deployed Cloud Run service.
+   the hostname of the deployed Cloud Run service. After connecting a custom
+   Hosting domain, add that hostname as well.
 4. Create a Firestore database in Native mode.
 5. Configure these application environment variables:
 
@@ -72,6 +74,16 @@ Open:
 
 The root page intentionally does not list events. Create or select an event in
 administration and use its generated invitation URL.
+
+The production root is instead served from `docs/index.html` by Firebase
+Hosting. To preview the Hosting configuration and poster locally, run:
+
+```sh
+firebase emulators:start --only hosting --project your-project-id
+```
+
+Hosting rewrites unmatched paths to the deployed Cloud Run service, so this
+preview uses the deployed backend for `/event`, `/admin`, and `/api`.
 
 To validate the production container locally:
 
@@ -280,7 +292,7 @@ firebase deploy --only \
   functions:migrateAnonymousBallotIndexes,functions:cleanupAnonymousUsers
 ```
 
-## Deploying the voter application to Cloud Run
+## Deploying the voter application and public site
 
 Create a dedicated runtime service account once and grant it Firestore access:
 
@@ -331,10 +343,34 @@ gcloud run deploy blavoter \
 ```
 
 Because the repository contains a `Dockerfile`, source deployment builds that
-container and creates a new Cloud Run revision. After the first deployment, add
-the generated `*.run.app` hostname to Firebase Authentication's authorized
-domains. Re-run the same command whenever application code or static pages
-change. Deploy the scheduled cleanup separately with the Firebase CLI.
+container and creates a new Cloud Run revision. Add the generated `*.run.app`
+hostname to Firebase Authentication's authorized domains. Re-run the same
+command whenever the Go application or its `static` directory changes.
+
+Firebase Hosting serves the poster at `/` from the `docs` directory. Requests
+for files that do not exist there—including `/event`, `/admin`, `/api`, and
+`/static`—are rewritten to the `blavoter` Cloud Run service in
+`europe-west1`. Deploy Hosting after the Cloud Run service exists:
+
+```sh
+firebase deploy --project "$PROJECT_ID" --only hosting
+```
+
+To connect `pivni-cirkus.cz`, open **Firebase Console → Hosting → Add custom
+domain**, enter the domain, and install the DNS records shown by Firebase.
+Remove any previous GitHub Pages DNS records first. Firebase provisions the TLS
+certificate; DNS and certificate activation can take up to 24 hours. Finally,
+add `pivni-cirkus.cz` under **Authentication → Settings → Authorized domains**.
+
+The public URLs then remain on the custom domain:
+
+```text
+https://pivni-cirkus.cz/
+https://pivni-cirkus.cz/event/{eventId}/{eventSlug}
+https://pivni-cirkus.cz/admin
+```
+
+Deploy the scheduled cleanup separately with the Firebase CLI.
 
 ## Tests
 

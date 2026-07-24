@@ -114,7 +114,9 @@
         }
 
         async function loadContestants(eventId = currentEventId) {
-            const res = await fetch(`/api/events/${encodeURIComponent(eventId)}/contestants`);
+            const res = await fetch(`/api/events/${encodeURIComponent(eventId)}/contestants`, {
+                cache: "no-store"
+            });
             if (!res.ok) throw new Error("Could not load contestants");
             const contestants = await res.json();
             if (currentEventId !== eventId) return;

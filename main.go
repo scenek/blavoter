@@ -279,6 +279,7 @@ func getAdminContestants(c *gin.Context) {
 }
 
 func getEventContestants(c *gin.Context, adminView bool) {
+	c.Header("Cache-Control", "no-store")
 	ctx := c.Request.Context()
 	eventID := c.Param("eventId")
 
@@ -549,11 +550,13 @@ func saveVote(c *gin.Context) {
 			}
 		}
 
-		if err := tx.Set(ballotRef, map[string]interface{}{
-			"scores":            req.Scores,
-			"voteRateTokens":    rateTokens,
-			"voteRateUpdatedAt": rateUpdatedAt,
-		}, firestore.MergeAll); err != nil {
+		// Replace the complete scores map. A recursive merge would preserve an
+		// omitted nested score, so selecting "Nehodnoceno" could not remove it.
+		if err := tx.Update(ballotRef, []firestore.Update{
+			{Path: "scores", Value: req.Scores},
+			{Path: "voteRateTokens", Value: rateTokens},
+			{Path: "voteRateUpdatedAt", Value: rateUpdatedAt},
+		}); err != nil {
 			return err
 		}
 		if err := indexVoterBallot(tx, voterUID, eventID); err != nil {
