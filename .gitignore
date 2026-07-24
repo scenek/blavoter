@@ -23,5 +23,8 @@ node_modules/
 *.test
 coverage.out
 
+# Agent worktrees
+.worktrees/
+
 # Operating system files
 .DS_Store
