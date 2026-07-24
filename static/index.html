@@ -9,26 +9,26 @@
 </head>
 <body class="app-page"><div class="app-shell">
 
-    <header class="text-center my-6">
+    <header class="app-header text-center">
         <div class="flex justify-end gap-4 mb-2">
-            <a id="resultsLink" href="#" hidden class="text-amber-700 hover:underline">Výsledky</a>
-            <a id="profileLink" href="#" class="text-amber-700 hover:underline">Uživatelský profil</a>
+            <a id="resultsLink" href="#" hidden class="app-link">Výsledky</a>
+            <a id="profileLink" href="#" class="app-link">Uživatelský profil</a>
         </div>
         <h1 id="eventName" class="text-3xl font-bold text-amber-600">Načítám událost…</h1>
         <p class="text-gray-500 text-sm">Ohodnoť položky známkou 0 (nejhorší) – 10 (nejlepší).</p>
     </header>
 
-    <div class="bg-white p-4 rounded-xl shadow mb-4">
+    <div class="panel panel--cut p-4 mb-4">
         <p id="eventDescription" class="text-sm text-gray-500"></p>
-        <p id="votingStatus" hidden class="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-900">
+        <p id="votingStatus" hidden class="notice mt-3 px-3 py-2 text-sm font-semibold">
             Hlasování je dočasně zastaveno. Uložená hodnocení můžeš zobrazit, ale nyní je nelze měnit.
         </p>
     </div>
 
-    <div id="contestantsList" class="space-y-4">
+    <div id="contestantsList" class="ballot-list">
         <p class="text-center text-gray-400">Načítám hlasovací položky...</p>
     </div>
-    <p id="saveStatus" class="mt-4 min-h-5 text-center text-sm text-gray-500" role="status" aria-live="polite"></p>
+    <p id="saveStatus" class="status-text mt-4 min-h-5 text-center text-sm" role="status" aria-live="polite"></p>
 
     </div>
     <script type="module">
@@ -142,29 +142,39 @@
             }
 
             contestants.forEach(c => {
-                const avgText = c.voteCount > 0 ? `Ø ${c.avgScore.toFixed(1)} (${c.voteCount}x)` : "Zatím nehodnoceno";
+                const card = document.createElement("article");
+                card.className = "ballot-card panel panel--cut";
 
-                const card = document.createElement("div");
-                card.className = "bg-white p-4 rounded-xl shadow";
-
+                const header = document.createElement("div");
+                header.className = "ballot-card__header";
                 const details = document.createElement("div");
+                details.className = "ballot-card__details";
                 const name = document.createElement("h3");
-                name.className = "font-bold text-lg";
+                name.className = "ballot-card__name";
                 name.textContent = c.name;
 
                 const description = document.createElement("p");
-                description.className = "text-xs text-gray-400";
+                description.className = "ballot-card__description";
                 description.textContent = c.description;
 
-                const average = document.createElement("span");
-                average.className = "inline-block mt-1 bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-semibold";
-                average.textContent = avgText;
-
                 details.append(name, description);
-                if (showResults) details.appendChild(average);
+                header.appendChild(details);
+
+                if (showResults) {
+                    const average = document.createElement("div");
+                    average.className = "ballot-card__result";
+                    const averageValue = document.createElement("span");
+                    averageValue.className = "ballot-card__average";
+                    averageValue.textContent = c.voteCount > 0 ? c.avgScore.toFixed(1) : "—";
+                    const voteCount = document.createElement("span");
+                    voteCount.className = "ballot-card__count";
+                    voteCount.textContent = c.voteCount > 0 ? `${c.voteCount} hlasů` : "Nehodnoceno";
+                    average.append(averageValue, voteCount);
+                    header.appendChild(average);
+                }
 
                 const controls = document.createElement("div");
-                controls.className = "flex flex-nowrap items-center gap-1.5 mt-3 overflow-x-auto pb-2";
+                controls.className = "vote-scale";
                 const choiceButtons = [];
                 const choices = [null, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -177,16 +187,15 @@
                     for (const entry of choiceButtons) {
                         const active = entry.value === selected;
                         entry.button.setAttribute("aria-pressed", String(active));
-                        entry.button.className = active
-                            ? "shrink-0 border-2 border-amber-600 bg-amber-100 text-amber-900 px-3 py-2 rounded-lg font-semibold"
-                            : "shrink-0 border border-gray-300 bg-white px-3 py-2 rounded-lg hover:bg-gray-50";
-                        if (votingStopped) entry.button.className += " opacity-50 cursor-not-allowed";
+                        entry.button.className = "vote-choice";
+                        entry.button.classList.toggle("vote-choice--selected", active);
                     }
                 };
 
                 for (const value of choices) {
                     const button = document.createElement("button");
                     button.type = "button";
+                    button.className = "vote-choice";
                     button.disabled = votingStopped;
                     button.textContent = value === null ? "Nehodnoceno" : String(value);
                     button.addEventListener("click", () => {
@@ -200,7 +209,7 @@
 
                 refreshChoices();
 
-                card.append(details, controls);
+                card.append(header, controls);
                 container.appendChild(card);
             });
         }

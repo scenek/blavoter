@@ -58,3 +58,25 @@ func TestThemeDefinesAccessibleSharedPrimitives(t *testing.T) {
 		"@media (prefers-reduced-motion: reduce)",
 	)
 }
+
+func TestBallotPlacesAggregateResultBesideOptionDetails(t *testing.T) {
+	body := readUIFile(t, "static/index.html")
+	requireUIContains(t, body,
+		`card.className = "ballot-card panel panel--cut"`,
+		`header.className = "ballot-card__header"`,
+		`average.className = "ballot-card__result"`,
+		`header.appendChild(average)`,
+		`controls.className = "vote-scale"`,
+		`button.className = "vote-choice"`,
+		`button.classList.toggle("vote-choice--selected", active)`,
+	)
+	css := readUIFile(t, "static/theme.css")
+	requireUIContains(t, css,
+		".ballot-card__header",
+		"grid-template-columns: minmax(0, 1fr) auto",
+		".ballot-card__result",
+		".vote-scale",
+		"flex-wrap: nowrap",
+		"overflow-x: auto",
+	)
+}

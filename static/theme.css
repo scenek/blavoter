@@ -109,6 +109,70 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .notice--success { border-left-color: var(--color-olive); color: #cbd7a4; }
 .status-text { color: var(--color-muted); }
 
+.ballot-list { display: grid; gap: .85rem; }
+.ballot-card { padding: 1rem; }
+.ballot-card__header {
+    align-items: start;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+.ballot-card__details { min-width: 0; }
+.ballot-card__name {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    letter-spacing: .015em;
+    line-height: 1.15;
+}
+.ballot-card__description { color: var(--color-muted); font-size: .85rem; margin-top: .2rem; }
+.ballot-card__result {
+    border-left: 1px solid var(--color-border);
+    min-width: 5.25rem;
+    padding-left: .85rem;
+    text-align: right;
+}
+.ballot-card__average {
+    color: var(--color-amber);
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.ballot-card__count { color: var(--color-muted); display: block; font-size: .72rem; margin-top: .25rem; }
+.vote-scale {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: .35rem;
+    margin-top: .9rem;
+    overflow-x: auto;
+    padding: .15rem .1rem .45rem;
+    scrollbar-color: var(--color-border) transparent;
+}
+.vote-choice {
+    background: var(--color-inset);
+    border: 1px solid var(--color-border);
+    border-radius: 2px 9px 2px 9px;
+    color: var(--color-text);
+    flex: 0 0 auto;
+    font-weight: 700;
+    min-height: 2.5rem;
+    min-width: 2.5rem;
+    padding: .45rem .7rem;
+}
+.vote-choice:hover:not(:disabled) { border-color: var(--color-amber); color: var(--color-amber); }
+.vote-choice--selected {
+    background: var(--color-olive);
+    border: 2px solid #c4d184;
+    color: #11140b;
+}
+.vote-choice:disabled { cursor: not-allowed; opacity: .45; }
+@media (max-width: 390px) {
+    .ballot-card { padding: .85rem; }
+    .ballot-card__header { gap: .65rem; }
+    .ballot-card__result { min-width: 4.5rem; padding-left: .6rem; }
+}
+
 :focus-visible {
     outline: 2px solid var(--color-amber);
     outline-offset: 2px;
