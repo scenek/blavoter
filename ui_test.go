@@ -80,3 +80,13 @@ func TestBallotPlacesAggregateResultBesideOptionDetails(t *testing.T) {
 		"overflow-x: auto",
 	)
 }
+
+func TestSaveStatusRetainsSharedThemeAcrossRuntimeStates(t *testing.T) {
+	body := readUIFile(t, "static/index.html")
+	requireUIContains(t, body,
+		`status.className = "status-text mt-4 min-h-5 text-center text-sm text-gray-500"`,
+		`status.className = "status-text mt-4 min-h-5 text-center text-sm text-amber-700"`,
+		`status.className = "status-text mt-4 min-h-5 text-center text-sm text-green-700"`,
+		`status.className = "status-text mt-4 min-h-5 text-center text-sm text-red-600"`,
+	)
+}

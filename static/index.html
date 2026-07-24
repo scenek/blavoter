@@ -240,7 +240,7 @@
                         }
                     }
 
-                    status.className = "mt-4 min-h-5 text-center text-sm text-gray-500";
+                    status.className = "status-text mt-4 min-h-5 text-center text-sm text-gray-500";
                     status.textContent = "Ukládám hodnocení…";
                     const response = await authenticatedFetch(`/api/events/${encodeURIComponent(currentEventId)}/vote`, {
                         method: "POST",
@@ -257,7 +257,7 @@
                         votingStopped = true;
                         document.getElementById("votingStatus").hidden = false;
                         pendingScores.clear();
-                        status.className = "mt-4 min-h-5 text-center text-sm text-amber-700";
+                        status.className = "status-text mt-4 min-h-5 text-center text-sm text-amber-700";
                         status.textContent = "Hlasování bylo zastaveno. Poslední změna nebyla uložena.";
                         await loadContestants();
                         alert("Hlasování bylo zastaveno. Hodnocení nebylo uloženo.");
@@ -274,14 +274,14 @@
                 }
 
                 completed = true;
-                status.className = "mt-4 min-h-5 text-center text-sm text-green-700";
+                status.className = "status-text mt-4 min-h-5 text-center text-sm text-green-700";
                 status.textContent = "Hodnocení uloženo.";
                 if (showResults) {
                     await loadContestants().catch(error => console.error("Result refresh failed:", error));
                 }
             } catch (error) {
                 console.error(error);
-                status.className = "mt-4 min-h-5 text-center text-sm text-red-600";
+                status.className = "status-text mt-4 min-h-5 text-center text-sm text-red-600";
                 status.textContent = "Hodnocení se nepodařilo uložit. Zkus vybrat hodnotu znovu.";
                 alert("Hodnocení se nepodařilo uložit.");
             } finally {
