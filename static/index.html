@@ -274,7 +274,7 @@
                 }
 
                 completed = true;
-                status.className = "status-text mt-4 min-h-5 text-center text-sm text-green-700";
+                status.className = "status-text status-text--success mt-4 min-h-5 text-center text-sm";
                 status.textContent = "Hodnocení uloženo.";
                 if (showResults) {
                     await loadContestants().catch(error => console.error("Result refresh failed:", error));

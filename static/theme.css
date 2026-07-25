@@ -108,6 +108,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .notice--error { border-left-color: var(--color-danger); color: #f3aaa0; }
 .notice--success { border-left-color: var(--color-olive); color: #cbd7a4; }
 .status-text { color: var(--color-muted); }
+.status-text--success { color: var(--color-amber); }
 
 .ballot-list { display: grid; gap: .85rem; }
 .ballot-card { padding: 1rem; }
@@ -162,9 +163,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 .vote-choice:hover:not(:disabled) { border-color: var(--color-amber); color: var(--color-amber); }
 .vote-choice--selected {
-    background: var(--color-olive);
-    border: 2px solid #c4d184;
-    color: #11140b;
+    background: var(--color-amber);
+    border: 2px solid #ffe0a3;
+    color: #17110c;
 }
 .vote-choice:disabled { cursor: not-allowed; opacity: .45; }
 @media (max-width: 390px) {
