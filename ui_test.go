@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -105,6 +106,27 @@ func TestVoteSelectionAndSavedStatusUseResultLinkColor(t *testing.T) {
 	)
 	if strings.Contains(body, `status.className = "status-text mt-4 min-h-5 text-center text-sm text-green-700"`) {
 		t.Error("successful save status still uses Tailwind green instead of the shared amber status class")
+	}
+}
+
+func TestVoteCountDisplaysUseSharedCzechFormatter(t *testing.T) {
+	numericVoteCount := regexp.MustCompile(`\$\{[^}]+\}\s*hlasů`)
+	pages := []string{
+		"static/index.html",
+		"static/results.html",
+		"static/admin.html",
+	}
+	for _, page := range pages {
+		t.Run(page, func(t *testing.T) {
+			body := readUIFile(t, page)
+			requireUIContains(t, body,
+				`import { formatVoteCount } from "/static/vote-count.mjs";`,
+				"formatVoteCount(",
+			)
+			if numericVoteCount.MatchString(body) {
+				t.Error("page still renders a numeric template literal ending in hlasů")
+			}
+		})
 	}
 }
 

@@ -34,6 +34,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+        import { formatVoteCount } from "/static/vote-count.mjs";
 
         let myScores = {};
         let auth;
@@ -168,7 +169,7 @@
                     averageValue.textContent = c.voteCount > 0 ? c.avgScore.toFixed(1) : "—";
                     const voteCount = document.createElement("span");
                     voteCount.className = "ballot-card__count";
-                    voteCount.textContent = c.voteCount > 0 ? `${c.voteCount} hlasů` : "Nehodnoceno";
+                    voteCount.textContent = formatVoteCount(c.voteCount);
                     average.append(averageValue, voteCount);
                     header.appendChild(average);
                 }

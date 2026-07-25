@@ -29,6 +29,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+        import { formatVoteCount } from "/static/vote-count.mjs";
 
         let mode = "";
         let eventId = "";
@@ -183,7 +184,7 @@
                 : "—";
             const count = document.createElement("p");
             count.className = "result-row__count";
-            count.textContent = `Počet hlasů: ${result.voteCount}`;
+            count.textContent = formatVoteCount(result.voteCount);
             values.append(average, count);
 
             row.append(rankElement, details, values);

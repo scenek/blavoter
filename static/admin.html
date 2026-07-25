@@ -119,6 +119,7 @@
             signInWithPopup,
             signOut
         } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+        import { formatVoteCount } from "/static/vote-count.mjs";
 
         let auth;
         let adminUser;
@@ -522,7 +523,7 @@
                     const result = document.createElement("p");
                     result.className = "eyebrow mt-1";
                     result.textContent = contestant.voteCount > 0
-                        ? `Průměr ${contestant.avgScore.toFixed(1)} · ${contestant.voteCount} hlasů`
+                        ? `Průměr ${contestant.avgScore.toFixed(1)} · ${formatVoteCount(contestant.voteCount)}`
                         : "Zatím bez hodnocení";
                     details.append(name, description, result);
 
