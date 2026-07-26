@@ -240,9 +240,12 @@ func TestResultHeaderActionsAreProminentAndDoNotWrap(t *testing.T) {
 		"color: var(--color-amber);",
 	)
 	requireCSSRuleContains(t, css, ".results-refresh",
-		"min-height: 2.75rem;",
+		"min-height: 2.875rem;",
 		"white-space: nowrap;",
 	)
+	if strings.Index(css, ".results-refresh {") < strings.Index(css, ".button {") {
+		t.Error("results refresh sizing is overridden by the later generic button rule")
+	}
 }
 
 func TestBallotSummaryShowsAndRefreshesPersonalScore(t *testing.T) {
