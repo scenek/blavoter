@@ -130,6 +130,47 @@ func TestBallotUsesResponsiveScoreGridWithoutHorizontalScrolling(t *testing.T) {
 	}
 }
 
+func TestBallotRendersPrivateNoteEditor(t *testing.T) {
+	body := readUIFile(t, "static/index.html")
+	requireUIContains(t, body,
+		`import { createNoteAutosave } from "/static/note-autosave.mjs";`,
+		`let myNotes = {};`,
+		`data.notes`,
+		`toggle.textContent = hasNote ? "Upravit poznámku" : "Přidat poznámku";`,
+		`textarea.setAttribute("aria-label",`,
+		`Array.from(textarea.value).length`,
+		`Array.from(textarea.value).slice(0, 300).join("")`,
+		`delayMs: 700`,
+		`/notes/${encodeURIComponent(c.id)}`,
+		`method: "PUT"`,
+		`status.textContent = "Ukládám…";`,
+		`status.textContent = "Uloženo";`,
+		`status.textContent = "Poznámku se nepodařilo uložit. Zkuste to znovu.";`,
+		`toggle.textContent = "Zobrazit poznámku";`,
+		`textarea.readOnly = true;`,
+	)
+
+	css := readUIFile(t, "static/theme.css")
+	requireCSSRuleContains(t, css, ".ballot-note__toggle",
+		"min-height: 2.75rem;",
+	)
+	requireCSSRuleContains(t, css, ".ballot-note__preview",
+		"overflow: hidden;",
+		"text-overflow: ellipsis;",
+		"white-space: nowrap;",
+	)
+	requireCSSRuleContains(t, css, ".ballot-note__textarea",
+		"min-height: 5rem;",
+		"width: 100%;",
+	)
+	requireCSSRuleContains(t, css, ".ballot-note__status--success",
+		"color: var(--color-amber);",
+	)
+	requireCSSRuleContains(t, css, ".ballot-note__status--error",
+		"color: #f3aaa0;",
+	)
+}
+
 func TestBallotUsesFullWidthWhenResultsAreHidden(t *testing.T) {
 	css := readUIFile(t, "static/theme.css")
 	requireCSSRuleContains(t, css, ".ballot-card__header",

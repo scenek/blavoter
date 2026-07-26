@@ -185,6 +185,56 @@ button, a { -webkit-tap-highlight-color: transparent; }
     .ballot-card__header { gap: .65rem; }
     .ballot-card__result { min-width: 4.5rem; padding-left: .6rem; }
 }
+.ballot-note {
+    border-top: 1px solid var(--color-border);
+    margin-top: .8rem;
+    padding-top: .45rem;
+}
+.ballot-note__toggle,
+.ballot-note__hide {
+    background: transparent;
+    border: 0;
+    color: var(--color-amber);
+    cursor: pointer;
+    font-weight: 700;
+    padding-inline: .2rem;
+    text-align: left;
+}
+.ballot-note__toggle { min-height: 2.75rem; }
+.ballot-note__hide { min-height: 2.5rem; }
+.ballot-note__preview {
+    color: var(--color-muted);
+    font-size: .85rem;
+    margin: 0 .2rem .35rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ballot-note__editor { margin-top: .25rem; }
+.ballot-note__textarea {
+    background: var(--color-inset);
+    border: 1px solid var(--color-control-border);
+    border-radius: 3px 12px 3px 12px;
+    color: var(--color-text);
+    min-height: 5rem;
+    padding: .65rem .75rem;
+    resize: vertical;
+    width: 100%;
+}
+.ballot-note__textarea[readonly] {
+    color: var(--color-muted);
+    resize: none;
+}
+.ballot-note__meta {
+    align-items: center;
+    display: flex;
+    gap: .75rem;
+    justify-content: space-between;
+}
+.ballot-note__counter { color: var(--color-muted); font-size: .75rem; }
+.ballot-note__status { font-size: .8rem; margin: .1rem .2rem 0; min-height: 1.2rem; }
+.ballot-note__status--success { color: var(--color-amber); }
+.ballot-note__status--error { color: #f3aaa0; }
 
 .empty-state { padding: 2rem; text-align: center; }
 .profile-card { padding: 1.25rem; }

@@ -34,9 +34,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+        import { createNoteAutosave } from "/static/note-autosave.mjs";
         import { formatVoteCount } from "/static/vote-count.mjs";
 
         let myScores = {};
+        let myNotes = {};
         let auth;
         let authenticatedUser;
         let currentEventId = "";
@@ -45,6 +47,7 @@
         let votingStopped = false;
         let saveLoopRunning = false;
         const pendingScores = new Map();
+        const noteDrafts = new Map();
 
         document.addEventListener("DOMContentLoaded", async () => {
             try {
@@ -113,6 +116,11 @@
             if (data.scores) {
                 myScores = data.scores;
             }
+            myNotes = data.notes || {};
+            noteDrafts.clear();
+            for (const [contestantId, note] of Object.entries(myNotes)) {
+                noteDrafts.set(contestantId, note);
+            }
             await loadContestants(eventId);
         }
 
@@ -128,8 +136,14 @@
             myScores = Object.fromEntries(
                 Object.entries(myScores).filter(([contestantId]) => currentContestantIds.has(contestantId))
             );
+            myNotes = Object.fromEntries(
+                Object.entries(myNotes).filter(([contestantId]) => currentContestantIds.has(contestantId))
+            );
             for (const contestantId of pendingScores.keys()) {
                 if (!currentContestantIds.has(contestantId)) pendingScores.delete(contestantId);
+            }
+            for (const contestantId of noteDrafts.keys()) {
+                if (!currentContestantIds.has(contestantId)) noteDrafts.delete(contestantId);
             }
             const container = document.getElementById("contestantsList");
             container.replaceChildren();
@@ -222,9 +236,135 @@
 
                 refreshChoices();
 
+                const noteControl = createNoteControl(c);
                 card.append(header, controls);
+                if (noteControl) card.appendChild(noteControl);
                 container.appendChild(card);
             });
+        }
+
+        function createNoteControl(c) {
+            const initialNote = noteDrafts.has(c.id) ? noteDrafts.get(c.id) : (myNotes[c.id] || "");
+            if (votingStopped && !initialNote.trim()) return null;
+
+            const note = document.createElement("section");
+            note.className = "ballot-note";
+
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.className = "ballot-note__toggle";
+
+            const preview = document.createElement("p");
+            preview.className = "ballot-note__preview";
+
+            const editor = document.createElement("div");
+            editor.className = "ballot-note__editor";
+            editor.hidden = true;
+
+            const textarea = document.createElement("textarea");
+            textarea.className = "ballot-note__textarea";
+            textarea.value = initialNote;
+            textarea.rows = 3;
+            textarea.setAttribute("aria-label", `Soukromá poznámka k položce ${c.name}`);
+            if (votingStopped) textarea.readOnly = true;
+
+            const editorMeta = document.createElement("div");
+            editorMeta.className = "ballot-note__meta";
+            const counter = document.createElement("span");
+            counter.className = "ballot-note__counter";
+            const hideButton = document.createElement("button");
+            hideButton.type = "button";
+            hideButton.className = "ballot-note__hide";
+            hideButton.textContent = "Skrýt poznámku";
+            editorMeta.append(counter, hideButton);
+
+            const status = document.createElement("p");
+            status.className = "ballot-note__status";
+            status.setAttribute("role", "status");
+            status.setAttribute("aria-live", "polite");
+            editor.append(textarea, editorMeta, status);
+            note.append(toggle, preview, editor);
+
+            const renderDraft = value => {
+                noteDrafts.set(c.id, value);
+                if (textarea.value !== value) textarea.value = value;
+                const noteLength = Array.from(textarea.value).length;
+                counter.textContent = `${noteLength}/300`;
+                preview.textContent = value;
+                const hasNote = value.trim() !== "";
+                preview.hidden = !hasNote || !editor.hidden;
+                if (votingStopped) {
+                    toggle.textContent = "Zobrazit poznámku";
+                } else {
+                    toggle.textContent = hasNote ? "Upravit poznámku" : "Přidat poznámku";
+                }
+            };
+
+            const saveNote = async value => {
+                const response = await authenticatedFetch(
+                    `/api/events/${encodeURIComponent(currentEventId)}/notes/${encodeURIComponent(c.id)}`,
+                    {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ note: value }),
+                    }
+                );
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    if (response.status === 409) {
+                        votingStopped = true;
+                        textarea.readOnly = true;
+                    }
+                    throw new Error(data.error || "Note save failed");
+                }
+                const savedNote = typeof data.note === "string" ? data.note : "";
+                if (savedNote) {
+                    myNotes[c.id] = savedNote;
+                } else {
+                    delete myNotes[c.id];
+                }
+                return savedNote;
+            };
+
+            const autosave = createNoteAutosave({
+                initialNote,
+                saveNote,
+                delayMs: 700,
+                onState: (state, details) => {
+                    renderDraft(details.draft);
+                    status.className = "ballot-note__status";
+                    status.textContent = "";
+                    if (state === "saving") {
+                        status.textContent = "Ukládám…";
+                    } else if (state === "saved") {
+                        status.classList.add("ballot-note__status--success");
+                        status.textContent = "Uloženo";
+                    } else if (state === "error") {
+                        status.classList.add("ballot-note__status--error");
+                        status.textContent = "Poznámku se nepodařilo uložit. Zkuste to znovu.";
+                    }
+                },
+            });
+
+            const setExpanded = expanded => {
+                editor.hidden = !expanded;
+                renderDraft(autosave.getDraft());
+                if (expanded && !textarea.readOnly) textarea.focus();
+            };
+
+            toggle.addEventListener("click", () => setExpanded(editor.hidden));
+            hideButton.addEventListener("click", () => setExpanded(false));
+            textarea.addEventListener("input", () => {
+                const value = Array.from(textarea.value).slice(0, 300).join("");
+                if (textarea.value !== value) textarea.value = value;
+                autosave.setDraft(value);
+            });
+            textarea.addEventListener("blur", () => {
+                void autosave.flush();
+            });
+
+            renderDraft(initialNote);
+            return note;
         }
 
         async function queueVoteSave() {
