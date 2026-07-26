@@ -77,7 +77,7 @@ func TestBallotPlacesAggregateResultBesideOptionDetails(t *testing.T) {
 		`header.className = "ballot-card__header"`,
 		`average.className = "ballot-card__result"`,
 		`header.appendChild(average)`,
-		`controls.className = "vote-scale"`,
+		`scale.className = "vote-scale"`,
 		`button.className = "vote-choice"`,
 		`button.classList.toggle("vote-choice--selected", active)`,
 	)
@@ -87,9 +87,37 @@ func TestBallotPlacesAggregateResultBesideOptionDetails(t *testing.T) {
 		"grid-template-columns: minmax(0, 1fr) auto",
 		".ballot-card__result",
 		".vote-scale",
-		"flex-wrap: nowrap",
-		"overflow-x: auto",
 	)
+}
+
+func TestBallotUsesResponsiveScoreGridWithoutHorizontalScrolling(t *testing.T) {
+	body := readUIFile(t, "static/index.html")
+	requireUIContains(t, body,
+		`controls.className = "vote-controls"`,
+		`scale.className = "vote-scale"`,
+		`const choices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]`,
+		`unratedButton.className = "vote-choice vote-choice--unrated"`,
+		`createChoiceButton(null, unratedButton)`,
+	)
+
+	css := readUIFile(t, "static/theme.css")
+	requireCSSRuleContains(t, css, ".vote-scale",
+		"display: grid;",
+		"grid-template-columns: repeat(11, minmax(0, 1fr));",
+	)
+	requireCSSRuleContains(t, css, ".vote-choice",
+		"min-height: 2.75rem;",
+		"min-width: 0;",
+	)
+	requireUIContains(t, css,
+		"@media (max-width: 600px)",
+		"grid-template-columns: repeat(6, minmax(0, 1fr));",
+		".vote-choice--unrated",
+		"width: 100%;",
+	)
+	if strings.Contains(css, "overflow-x: auto") {
+		t.Error("voting selector still relies on horizontal scrolling")
+	}
 }
 
 func TestBallotUsesFullWidthWhenResultsAreHidden(t *testing.T) {

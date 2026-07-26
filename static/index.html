@@ -176,9 +176,11 @@
                 }
 
                 const controls = document.createElement("div");
-                controls.className = "vote-scale";
+                controls.className = "vote-controls";
+                const scale = document.createElement("div");
+                scale.className = "vote-scale";
                 const choiceButtons = [];
-                const choices = [null, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+                const choices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
                 const selectedValue = () => {
                     if (pendingScores.has(c.id)) return pendingScores.get(c.id);
@@ -189,15 +191,13 @@
                     for (const entry of choiceButtons) {
                         const active = entry.value === selected;
                         entry.button.setAttribute("aria-pressed", String(active));
-                        entry.button.className = "vote-choice";
+                        entry.button.className = entry.baseClass;
                         entry.button.classList.toggle("vote-choice--selected", active);
                     }
                 };
 
-                for (const value of choices) {
-                    const button = document.createElement("button");
+                const createChoiceButton = (value, button) => {
                     button.type = "button";
-                    button.className = "vote-choice";
                     button.disabled = votingStopped;
                     button.textContent = value === null ? "Nehodnoceno" : String(value);
                     button.addEventListener("click", () => {
@@ -205,9 +205,20 @@
                         refreshChoices();
                         queueVoteSave();
                     });
-                    choiceButtons.push({ button, value });
-                    controls.appendChild(button);
+                    choiceButtons.push({ button, value, baseClass: button.className });
+                };
+
+                for (const value of choices) {
+                    const button = document.createElement("button");
+                    button.className = "vote-choice";
+                    createChoiceButton(value, button);
+                    scale.appendChild(button);
                 }
+
+                const unratedButton = document.createElement("button");
+                unratedButton.className = "vote-choice vote-choice--unrated";
+                createChoiceButton(null, unratedButton);
+                controls.append(scale, unratedButton);
 
                 refreshChoices();
 
