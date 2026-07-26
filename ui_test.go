@@ -134,9 +134,6 @@ func TestExpandableBallotSummaryIsTouchFriendlyAndResponsive(t *testing.T) {
 		"cursor: pointer;",
 		"min-height: 2.75rem;",
 	)
-	requireCSSRuleContains(t, css, ".ballot-card__summary:focus-visible",
-		"box-shadow: var(--focus-ring);",
-	)
 	requireCSSRuleContains(t, css, ".ballot-card[open] .ballot-card__chevron",
 		"transform: rotate(90deg);",
 	)
@@ -152,6 +149,16 @@ func TestExpandableBallotSummaryIsTouchFriendlyAndResponsive(t *testing.T) {
 	if strings.Contains(css, "overflow-x: auto") {
 		t.Error("expandable ballot still relies on horizontal scrolling")
 	}
+}
+
+func TestClippedBallotCardKeepsSummaryFocusRingInsideBounds(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	requireCSSRuleContains(t, css, ".ballot-card",
+		"overflow: clip;",
+	)
+	requireCSSRuleContains(t, css, ".ballot-card__summary:focus-visible",
+		"box-shadow: inset 0 0 0 2px var(--color-amber);",
+	)
 }
 
 func TestBallotRendersPrivateNoteEditor(t *testing.T) {
@@ -179,6 +186,7 @@ func TestBallotRendersPrivateNoteEditor(t *testing.T) {
 	requireCSSRuleContains(t, css, ".ballot-note__toggle",
 		"min-height: 2.75rem;",
 	)
+	requireUIContains(t, css, ".ballot-note__hide { min-height: 2.75rem; }")
 	requireCSSRuleContains(t, css, ".ballot-note__preview",
 		"overflow: hidden;",
 		"text-overflow: ellipsis;",
@@ -248,6 +256,22 @@ func TestResultHeaderActionsAreProminentAndDoNotWrap(t *testing.T) {
 	}
 }
 
+func TestBallotProfileActionIsTouchFriendlyAndDoesNotWrap(t *testing.T) {
+	ballot := readUIFile(t, "static/index.html")
+	requireUIContains(t, ballot,
+		`id="profileLink" href="#" class="app-link ballot-profile-action"`,
+	)
+
+	css := readUIFile(t, "static/theme.css")
+	requireCSSRuleContains(t, css, ".ballot-profile-action",
+		"max-width: 100%;",
+		"min-height: 2.75rem;",
+		"overflow: hidden;",
+		"text-overflow: ellipsis;",
+		"white-space: nowrap;",
+	)
+}
+
 func TestBallotSummaryShowsAndRefreshesPersonalScore(t *testing.T) {
 	body := readUIFile(t, "static/index.html")
 	requireUIContains(t, body,
@@ -265,7 +289,6 @@ func TestThemeProvidesAccessibleTouchAndControlStates(t *testing.T) {
 	requireCSSRuleContains(t, css, ".app-link",
 		"align-items: center;",
 		"display: inline-flex;",
-		"min-height: 2.5rem;",
 	)
 	for _, selector := range []string{".button", ".field", ".vote-choice"} {
 		requireCSSRuleContains(t, css, selector,

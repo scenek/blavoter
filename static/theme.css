@@ -67,6 +67,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 .app-link:hover { text-decoration-color: currentColor; }
 .app-link--standalone { display: flex; width: fit-content; }
+.ballot-profile-action {
+    max-width: 100%;
+    min-height: 2.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 .header-actions,
 .results-header-actions {
     align-items: center;
@@ -160,7 +167,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 .ballot-card__summary::-webkit-details-marker { display: none; }
 .ballot-card__summary:focus-visible {
-    box-shadow: var(--focus-ring);
+    box-shadow: inset 0 0 0 2px var(--color-amber);
     outline: 0;
 }
 .ballot-card__chevron {
@@ -272,7 +279,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     text-align: left;
 }
 .ballot-note__toggle { min-height: 2.75rem; }
-.ballot-note__hide { min-height: 2.5rem; }
+.ballot-note__hide { min-height: 2.75rem; }
 .ballot-note__preview {
     color: var(--color-muted);
     font-size: .85rem;
