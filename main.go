@@ -192,6 +192,7 @@ func main() {
 	authorized.Use(requireAuth(authClient))
 	authorized.POST("/vote", saveVote)
 	authorized.GET("/my-votes", getMyVotes)
+	authorized.PUT("/notes/:contestantId", saveNote)
 	authorized.PUT("/profile", saveProfile)
 
 	admin := r.Group("/api/admin")
@@ -383,6 +384,22 @@ func serveContestantList(c *gin.Context, eventRef *firestore.DocumentRef, event 
 	}
 
 	c.JSON(http.StatusOK, result)
+}
+
+func loadContestantIDs(ctx context.Context, eventRef *firestore.DocumentRef) (map[string]struct{}, error) {
+	ids := make(map[string]struct{})
+	iter := eventRef.Collection("contestants").Documents(ctx)
+	defer iter.Stop()
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			return ids, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		ids[doc.Ref.ID] = struct{}{}
+	}
 }
 
 func loadAggregateStats(ctx context.Context, eventRef *firestore.DocumentRef, contestants map[string]*Contestant) (map[string]ResultAggregate, error) {
@@ -610,6 +627,117 @@ func saveVote(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
+func saveNote(c *gin.Context) {
+	ctx := c.Request.Context()
+	eventID := c.Param("eventId")
+	contestantID := c.Param("contestantId")
+
+	var req NoteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Neplatný požadavek"})
+		return
+	}
+	note, valid := normalizeNoteRequest(req)
+	if !valid || !validDocumentID(eventID) || !validDocumentID(contestantID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Poznámka obsahuje neplatná data"})
+		return
+	}
+	if client == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Firestore client není připojen"})
+		return
+	}
+
+	voterUID, err := authenticatedUID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Přihlášení je vyžadováno"})
+		return
+	}
+
+	eventRef := client.Collection("events").Doc(eventID)
+	contestantRef := eventRef.Collection("contestants").Doc(contestantID)
+	ballotRef := eventRef.Collection("votes").Doc(voterUID)
+	tombstoneRef := client.Collection(cleanedAnonymousUsersCollection).Doc(voterUID)
+	err = client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
+		eventDoc, err := tx.Get(eventRef)
+		if status.Code(err) == codes.NotFound {
+			return errEventInactive
+		}
+		if err != nil {
+			return err
+		}
+		var event Event
+		if err := eventDoc.DataTo(&event); err != nil {
+			return err
+		}
+		if event.Archived {
+			return errEventInactive
+		}
+		if event.VotingStopped {
+			return errVotingStopped
+		}
+
+		if _, err := tx.Get(contestantRef); status.Code(err) == codes.NotFound {
+			return errInvalidVote
+		} else if err != nil {
+			return err
+		}
+		if err := ensureVoterNotCleaned(tx, tombstoneRef); err != nil {
+			return err
+		}
+
+		ballot, err := tx.Get(ballotRef)
+		if status.Code(err) == codes.NotFound {
+			return errMissingProfile
+		}
+		if err != nil {
+			return err
+		}
+		nickname, ok := ballot.Data()["nickname"].(string)
+		if !ok || strings.TrimSpace(nickname) == "" {
+			return errMissingProfile
+		}
+
+		rateUpdatedAt := time.Now()
+		rateTokens, allowed := consumeVoteToken(ballot.Data(), rateUpdatedAt)
+		if !allowed {
+			return errVoteRateLimited
+		}
+		notes := setStoredNote(storedNotes(ballot.Data()["notes"]), contestantID, note)
+		return tx.Update(ballotRef, []firestore.Update{
+			{Path: "notes", Value: notes},
+			{Path: "voteRateTokens", Value: rateTokens},
+			{Path: "voteRateUpdatedAt", Value: rateUpdatedAt},
+		})
+	})
+
+	switch {
+	case errors.Is(err, errVotingStopped):
+		c.JSON(http.StatusConflict, gin.H{"error": "Hlasování je zastaveno"})
+		return
+	case errors.Is(err, errEventInactive):
+		c.JSON(http.StatusNotFound, gin.H{"error": "Událost nebyla nalezena"})
+		return
+	case errors.Is(err, errInvalidVote):
+		c.JSON(http.StatusNotFound, gin.H{"error": "Hlasovací položka nebyla nalezena"})
+		return
+	case errors.Is(err, errMissingProfile):
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Nejdříve nastavte přezdívku"})
+		return
+	case errors.Is(err, errAccountCleaned):
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Anonymní účet již není platný; obnovte stránku"})
+		return
+	case errors.Is(err, errVoteRateLimited):
+		c.Header("Retry-After", "1")
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "Příliš mnoho změn; zkuste to za okamžik"})
+		return
+	case err != nil:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Poznámku se nepodařilo uložit"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "ok", "note": note})
+}
+
 func getMyVotes(c *gin.Context) {
 	ctx := c.Request.Context()
 	eventID := c.Param("eventId")
@@ -647,7 +775,14 @@ func getMyVotes(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, myVotesResponse(doc.Data()))
+	contestantIDs, err := loadContestantIDs(ctx, client.Collection("events").Doc(eventID))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Chyba při načítání poznámek"})
+		return
+	}
+	response := myVotesResponse(doc.Data())
+	response.Notes = filterNotes(response.Notes, contestantIDs)
+	c.JSON(http.StatusOK, response)
 }
 
 func myVotesResponse(data map[string]interface{}) MyVotesResponse {
@@ -777,6 +912,11 @@ func validNote(note string) bool {
 	return utf8.RuneCountInString(note) <= maxNoteLength
 }
 
+func normalizeNoteRequest(req NoteRequest) (string, bool) {
+	note := strings.TrimSpace(req.Note)
+	return note, validNote(note)
+}
+
 func storedNotes(value interface{}) map[string]string {
 	notes := make(map[string]string)
 	raw, ok := value.(map[string]interface{})
@@ -807,6 +947,16 @@ func setStoredNote(notes map[string]string, contestantID, note string) map[strin
 		updated[contestantID] = note
 	}
 	return updated
+}
+
+func filterNotes(notes map[string]string, allowedIDs map[string]struct{}) map[string]string {
+	filtered := make(map[string]string)
+	for contestantID, note := range notes {
+		if _, allowed := allowedIDs[contestantID]; allowed {
+			filtered[contestantID] = note
+		}
+	}
+	return filtered
 }
 
 func filterScores(scores map[string]int, allowedIDs map[string]struct{}) map[string]int {

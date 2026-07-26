@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -247,6 +248,57 @@ func TestSetStoredNotePreservesOtherNotesAndDeletesEmpty(t *testing.T) {
 	cleared := setStoredNote(updated, "first", "")
 	if _, exists := cleared["first"]; exists || cleared["second"] != "two" {
 		t.Fatalf("cleared notes = %#v", cleared)
+	}
+}
+
+func TestFilterNotesRemovesDeletedContestants(t *testing.T) {
+	got := filterNotes(
+		map[string]string{"current": "one", "deleted": "two"},
+		map[string]struct{}{"current": {}},
+	)
+	if len(got) != 1 || got["current"] != "one" {
+		t.Fatalf("filterNotes() = %#v", got)
+	}
+}
+
+func TestNormalizeNoteRequest(t *testing.T) {
+	note, ok := normalizeNoteRequest(NoteRequest{Note: "  citrus 🍺  "})
+	if !ok || note != "citrus 🍺" {
+		t.Fatalf("normalizeNoteRequest() = (%q, %v)", note, ok)
+	}
+	if _, ok := normalizeNoteRequest(NoteRequest{
+		Note: strings.Repeat("x", maxNoteLength+1),
+	}); ok {
+		t.Fatal("overlong request was accepted")
+	}
+}
+
+func TestRouterRegistersPrivateNoteEndpoint(t *testing.T) {
+	source, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(source), `authorized.PUT("/notes/:contestantId", saveNote)`) {
+		t.Fatal("authenticated private note route is not registered")
+	}
+}
+
+func TestSaveNoteDoesNotTouchAggregates(t *testing.T) {
+	source, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(source)
+	start := strings.Index(body, "func saveNote(")
+	end := strings.Index(body, "func getMyVotes(")
+	if start < 0 || end <= start {
+		t.Fatal("saveNote handler is missing or misplaced")
+	}
+	handler := body[start:end]
+	for _, forbidden := range []string{"resultDeltas", `Collection("results")`, "totalScore", "voteCount"} {
+		if strings.Contains(handler, forbidden) {
+			t.Fatalf("saveNote handler contains aggregate operation %q", forbidden)
+		}
 	}
 }
 
