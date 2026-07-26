@@ -128,6 +128,32 @@ func TestBallotUsesResponsiveScoreGridWithoutHorizontalScrolling(t *testing.T) {
 	}
 }
 
+func TestExpandableBallotSummaryIsTouchFriendlyAndResponsive(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	requireCSSRuleContains(t, css, ".ballot-card__summary",
+		"cursor: pointer;",
+		"min-height: 2.75rem;",
+	)
+	requireCSSRuleContains(t, css, ".ballot-card__summary:focus-visible",
+		"box-shadow: var(--focus-ring);",
+	)
+	requireCSSRuleContains(t, css, ".ballot-card[open] .ballot-card__chevron",
+		"transform: rotate(90deg);",
+	)
+	requireCSSRuleContains(t, css, ".ballot-card__content",
+		"border-top: 1px solid var(--color-border);",
+	)
+	requireUIContains(t, css,
+		"@media (max-width: 600px)",
+		".ballot-card__summary",
+		".ballot-card__personal",
+		"@media (prefers-reduced-motion: reduce)",
+	)
+	if strings.Contains(css, "overflow-x: auto") {
+		t.Error("expandable ballot still relies on horizontal scrolling")
+	}
+}
+
 func TestBallotRendersPrivateNoteEditor(t *testing.T) {
 	body := readUIFile(t, "static/index.html")
 	requireUIContains(t, body,
