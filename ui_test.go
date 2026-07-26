@@ -221,6 +221,29 @@ func TestBallotUsesIndependentExpandableOptionRows(t *testing.T) {
 	)
 }
 
+func TestResultHeaderActionsAreProminentAndDoNotWrap(t *testing.T) {
+	ballot := readUIFile(t, "static/index.html")
+	results := readUIFile(t, "static/results.html")
+	requireUIContains(t, ballot,
+		`class="header-action header-action--results"`,
+		`aria-label="Zobrazit výsledky"`,
+	)
+	requireUIContains(t, results,
+		`class="results-header-actions"`,
+		`class="button button--secondary results-refresh"`,
+		`Obnovit výsledky`,
+	)
+
+	css := readUIFile(t, "static/theme.css")
+	requireCSSRuleContains(t, css, ".header-action--results",
+		"border: 1px solid var(--color-amber);",
+		"color: var(--color-amber);",
+	)
+	requireCSSRuleContains(t, css, ".results-refresh",
+		"white-space: nowrap;",
+	)
+}
+
 func TestBallotSummaryShowsAndRefreshesPersonalScore(t *testing.T) {
 	body := readUIFile(t, "static/index.html")
 	requireUIContains(t, body,

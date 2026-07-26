@@ -10,8 +10,12 @@
 <body class="app-page"><div class="app-shell">
 
     <header class="app-header text-center">
-        <div class="flex justify-end gap-4 mb-2">
-            <a id="resultsLink" href="#" hidden class="app-link">Výsledky</a>
+        <div class="header-actions mb-2">
+            <a id="resultsLink" href="#" hidden class="header-action header-action--results"
+               aria-label="Zobrazit výsledky">
+                <span aria-hidden="true">▥</span>
+                <span>Výsledky</span>
+            </a>
             <a id="profileLink" href="#" class="app-link">Uživatelský profil</a>
         </div>
         <h1 id="eventName" class="text-3xl font-bold text-amber-600">Načítám událost…</h1>
