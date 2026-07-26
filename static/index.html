@@ -48,6 +48,7 @@
         let saveLoopRunning = false;
         const pendingScores = new Map();
         const noteDrafts = new Map();
+        const expandedContestantIds = new Set();
 
         document.addEventListener("DOMContentLoaded", async () => {
             try {
@@ -145,6 +146,11 @@
             for (const contestantId of noteDrafts.keys()) {
                 if (!currentContestantIds.has(contestantId)) noteDrafts.delete(contestantId);
             }
+            for (const contestantId of expandedContestantIds) {
+                if (!currentContestantIds.has(contestantId)) {
+                    expandedContestantIds.delete(contestantId);
+                }
+            }
             const container = document.getElementById("contestantsList");
             container.replaceChildren();
 
@@ -157,26 +163,38 @@
             }
 
             contestants.forEach(c => {
-                const card = document.createElement("article");
+                const card = document.createElement("details");
                 card.className = "ballot-card panel panel--cut";
+                card.open = expandedContestantIds.has(c.id);
 
-                const header = document.createElement("div");
-                header.className = "ballot-card__header";
-                const details = document.createElement("div");
-                details.className = "ballot-card__details";
+                const summary = document.createElement("summary");
+                summary.className = "ballot-card__summary";
+                summary.setAttribute("aria-label", `Hlasovací položka ${c.name}`);
+
+                const chevron = document.createElement("span");
+                chevron.className = "ballot-card__chevron";
+                chevron.setAttribute("aria-hidden", "true");
+
                 const name = document.createElement("h3");
                 name.className = "ballot-card__name";
                 name.textContent = c.name;
+
+                const personal = document.createElement("span");
+                personal.className = "ballot-card__personal";
+                const personalLabel = document.createElement("span");
+                personalLabel.className = "ballot-card__personal-label";
+                personalLabel.textContent = "Tvoje hodnocení";
+                const personalValue = document.createElement("strong");
+                personalValue.className = "ballot-card__personal-value";
+                personal.append(personalLabel, personalValue);
+
+                summary.append(chevron, name, personal);
 
                 const description = document.createElement("p");
                 description.className = "ballot-card__description";
                 description.textContent = c.description;
 
-                details.append(name, description);
-                header.appendChild(details);
-
                 if (showResults) {
-                    header.classList.add("ballot-card__header--with-result");
                     const average = document.createElement("div");
                     average.className = "ballot-card__result";
                     const averageValue = document.createElement("span");
@@ -186,7 +204,7 @@
                     voteCount.className = "ballot-card__count";
                     voteCount.textContent = formatVoteCount(c.voteCount);
                     average.append(averageValue, voteCount);
-                    header.appendChild(average);
+                    summary.appendChild(average);
                 }
 
                 const controls = document.createElement("div");
@@ -200,6 +218,10 @@
                     if (pendingScores.has(c.id)) return pendingScores.get(c.id);
                     return Object.prototype.hasOwnProperty.call(myScores, c.id) ? myScores[c.id] : null;
                 };
+                const refreshPersonalScore = () => {
+                    const selected = selectedValue();
+                    personalValue.textContent = selected === null ? "Nehodnoceno" : String(selected);
+                };
                 const refreshChoices = () => {
                     const selected = selectedValue();
                     for (const entry of choiceButtons) {
@@ -208,6 +230,7 @@
                         entry.button.className = entry.baseClass;
                         entry.button.classList.toggle("vote-choice--selected", active);
                     }
+                    refreshPersonalScore();
                 };
 
                 const createChoiceButton = (value, button) => {
@@ -237,8 +260,22 @@
                 refreshChoices();
 
                 const noteControl = createNoteControl(c);
-                card.append(header, controls);
-                if (noteControl) card.appendChild(noteControl);
+                const expandedContent = document.createElement("div");
+                expandedContent.className = "ballot-card__content";
+                if (c.description) {
+                    expandedContent.append(description, controls);
+                } else {
+                    expandedContent.appendChild(controls);
+                }
+                if (noteControl) expandedContent.appendChild(noteControl);
+                card.append(summary, expandedContent);
+                card.addEventListener("toggle", () => {
+                    if (card.open) {
+                        expandedContestantIds.add(c.id);
+                    } else {
+                        expandedContestantIds.delete(c.id);
+                    }
+                });
                 container.appendChild(card);
             });
         }

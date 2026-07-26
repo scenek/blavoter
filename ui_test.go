@@ -84,17 +84,15 @@ func TestBallotPlacesAggregateResultBesideOptionDetails(t *testing.T) {
 	body := readUIFile(t, "static/index.html")
 	requireUIContains(t, body,
 		`card.className = "ballot-card panel panel--cut"`,
-		`header.className = "ballot-card__header"`,
+		`summary.className = "ballot-card__summary"`,
 		`average.className = "ballot-card__result"`,
-		`header.appendChild(average)`,
+		`summary.appendChild(average)`,
 		`scale.className = "vote-scale"`,
 		`button.className = "vote-choice"`,
 		`button.classList.toggle("vote-choice--selected", active)`,
 	)
 	css := readUIFile(t, "static/theme.css")
 	requireUIContains(t, css,
-		".ballot-card__header",
-		"grid-template-columns: minmax(0, 1fr) auto",
 		".ballot-card__result",
 		".vote-scale",
 	)
@@ -172,24 +170,40 @@ func TestBallotRendersPrivateNoteEditor(t *testing.T) {
 	)
 }
 
-func TestBallotUsesFullWidthWhenResultsAreHidden(t *testing.T) {
-	css := readUIFile(t, "static/theme.css")
-	requireCSSRuleContains(t, css, ".ballot-card__header",
-		"grid-template-columns: minmax(0, 1fr);",
-	)
-	requireCSSRuleContains(t, css, ".ballot-card__header--with-result",
-		"grid-template-columns: minmax(0, 1fr) auto;",
-	)
-
+func TestBallotPlacesAggregateResultInSummaryWhenResultsAreShown(t *testing.T) {
 	body := readUIFile(t, "static/index.html")
-	modifier := `header.classList.add("ballot-card__header--with-result")`
-	if count := strings.Count(body, modifier); count != 1 {
-		t.Fatalf("result header modifier assignment count = %d, want 1", count)
-	}
-	resultBranch := regexp.MustCompile(`if \(showResults\) \{\s*` + regexp.QuoteMeta(modifier))
+	resultBranch := regexp.MustCompile(`if \(showResults\) \{[\s\S]*?` + regexp.QuoteMeta(`summary.appendChild(average)`))
 	if !resultBranch.MatchString(body) {
-		t.Error("result header modifier is not added inside the showResults branch")
+		t.Error("aggregate result is not appended to the summary inside the showResults branch")
 	}
+}
+
+func TestBallotUsesIndependentExpandableOptionRows(t *testing.T) {
+	body := readUIFile(t, "static/index.html")
+	requireUIContains(t, body,
+		`const expandedContestantIds = new Set();`,
+		`const card = document.createElement("details");`,
+		`const summary = document.createElement("summary");`,
+		`summary.className = "ballot-card__summary";`,
+		`const expandedContent = document.createElement("div");`,
+		`expandedContent.className = "ballot-card__content";`,
+		`card.open = expandedContestantIds.has(c.id);`,
+		`card.addEventListener("toggle",`,
+		`expandedContestantIds.add(c.id);`,
+		`expandedContestantIds.delete(c.id);`,
+		`expandedContent.append(description, controls);`,
+	)
+}
+
+func TestBallotSummaryShowsAndRefreshesPersonalScore(t *testing.T) {
+	body := readUIFile(t, "static/index.html")
+	requireUIContains(t, body,
+		`personalLabel.textContent = "Tvoje hodnocení";`,
+		`personalValue.textContent = selected === null ? "Nehodnoceno" : String(selected);`,
+		`refreshPersonalScore();`,
+		`for (const contestantId of expandedContestantIds)`,
+		`expandedContestantIds.delete(contestantId);`,
+	)
 }
 
 func TestThemeProvidesAccessibleTouchAndControlStates(t *testing.T) {
