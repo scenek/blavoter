@@ -112,6 +112,28 @@ test("does not downgrade a permanent cleanup tombstone", async () => {
   assert.deepEqual(writes, []);
 });
 
+test("deletes the complete ballot containing private notes", async () => {
+  const deleted = [];
+  const ballotRef = {
+    path: "events/event-1/votes/voter-1",
+    data: {scores: {option: 8}, notes: {option: "private"}},
+  };
+  const db = {
+    bulkWriter() {
+      return {
+        onWriteError() {},
+        delete(ref) {
+          deleted.push(ref);
+        },
+        async close() {},
+      };
+    },
+  };
+
+  await _test.deleteDocuments(db, [ballotRef]);
+  assert.deepEqual(deleted, [ballotRef]);
+});
+
 test("locks all cleanup events atomically", async () => {
   const eventA = {path: "events/a"};
   const eventB = {path: "events/b"};

@@ -477,6 +477,7 @@ exports.cleanupAnonymousUsers = onSchedule(
 );
 
 module.exports._test = {
+  deleteDocuments,
   findCandidateBallots,
   findExpiredAnonymousUsers,
   loadCleanupEventPaths,
