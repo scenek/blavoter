@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap");
 
 :root {
     color-scheme: dark;
@@ -14,8 +14,8 @@
     --color-border: #51463a;
     --color-control-border: #8f7f6d;
     --color-inset: #110f0d;
-    --font-display: "Oswald", "Arial Narrow", sans-serif;
-    --font-body: "Source Sans 3", system-ui, sans-serif;
+    --font-display: "Bricolage Grotesque", sans-serif;
+    --font-body: "Instrument Sans", system-ui, sans-serif;
     --radius-cut: 3px 18px 3px 18px;
     --focus-ring: 0 0 0 3px rgb(240 173 69 / 35%);
 }

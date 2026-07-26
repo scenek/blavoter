@@ -70,6 +70,16 @@ func TestThemeDefinesAccessibleSharedPrimitives(t *testing.T) {
 	)
 }
 
+func TestThemeUsesFriendlyModernTypography(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	requireUIContains(t, css,
+		"family=Bricolage+Grotesque",
+		"family=Instrument+Sans",
+		`--font-display: "Bricolage Grotesque", sans-serif;`,
+		`--font-body: "Instrument Sans", system-ui, sans-serif;`,
+	)
+}
+
 func TestBallotPlacesAggregateResultBesideOptionDetails(t *testing.T) {
 	body := readUIFile(t, "static/index.html")
 	requireUIContains(t, body,
