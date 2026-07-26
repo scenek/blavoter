@@ -211,6 +211,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
     white-space: nowrap;
 }
 .ballot-note__editor { margin-top: .25rem; }
+.ballot-note__privacy {
+    color: var(--color-muted);
+    font-size: .8rem;
+    margin: 0 .2rem .4rem;
+}
 .ballot-note__textarea {
     background: var(--color-inset);
     border: 1px solid var(--color-control-border);

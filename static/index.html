@@ -261,6 +261,10 @@
             editor.className = "ballot-note__editor";
             editor.hidden = true;
 
+            const privacy = document.createElement("p");
+            privacy.className = "ballot-note__privacy";
+            privacy.textContent = "Soukromá poznámka – vidíš ji jen ty.";
+
             const textarea = document.createElement("textarea");
             textarea.className = "ballot-note__textarea";
             textarea.value = initialNote;
@@ -282,7 +286,7 @@
             status.className = "ballot-note__status";
             status.setAttribute("role", "status");
             status.setAttribute("aria-live", "polite");
-            editor.append(textarea, editorMeta, status);
+            editor.append(privacy, textarea, editorMeta, status);
             note.append(toggle, preview, editor);
 
             const renderDraft = value => {

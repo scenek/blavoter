@@ -138,6 +138,7 @@ func TestBallotRendersPrivateNoteEditor(t *testing.T) {
 		`data.notes`,
 		`toggle.textContent = hasNote ? "Upravit poznámku" : "Přidat poznámku";`,
 		`textarea.setAttribute("aria-label",`,
+		`privacy.textContent = "Soukromá poznámka – vidíš ji jen ty.";`,
 		`Array.from(textarea.value).length`,
 		`Array.from(textarea.value).slice(0, 300).join("")`,
 		`delayMs: 700`,
