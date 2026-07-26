@@ -126,7 +126,7 @@ func TestThemeProvidesAccessibleTouchAndControlStates(t *testing.T) {
 		)
 	}
 	requireCSSRuleContains(t, css, ".matrix-score--empty",
-		"color: #9f9181;",
+		"color: #a19484;",
 	)
 }
 
@@ -253,6 +253,19 @@ func TestVoteMatrixKeepsNamedStickyColumns(t *testing.T) {
 		`heading.textContent = option.name || "Položka bez názvu"`,
 		`userCell.className = "matrix-user matrix-user--body"`,
 		`scoreCell.className = "matrix-score"`,
+	)
+}
+
+func TestAdministrationErrorLinkUsesStandaloneLayout(t *testing.T) {
+	body := readUIFile(t, "static/votes.html")
+	requireUIContains(t, body,
+		`link.className = "app-link app-link--standalone mt-3 block"`,
+	)
+
+	css := readUIFile(t, "static/theme.css")
+	requireCSSRuleContains(t, css, ".app-link--standalone",
+		"display: flex;",
+		"width: fit-content;",
 	)
 }
 

@@ -66,6 +66,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     text-underline-offset: .2em;
 }
 .app-link:hover { text-decoration-color: currentColor; }
+.app-link--standalone { display: flex; width: fit-content; }
 
 .panel {
     background: linear-gradient(145deg, var(--color-surface-raised), var(--color-surface));
@@ -279,7 +280,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     padding: .75rem;
     text-align: center;
 }
-.matrix-score--empty { color: #9f9181; font-weight: 400; }
+.matrix-score--empty { color: #a19484; font-weight: 400; }
 .pagination { align-items: center; display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
 
 :focus-visible {
