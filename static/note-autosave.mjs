@@ -56,7 +56,9 @@ export function createNoteAutosave({
 
         const value = draft.trim();
         if (value === confirmed) {
-            emit("idle");
+            const changed = draft !== confirmed;
+            draft = confirmed;
+            emit(changed ? "saved" : "idle");
             return confirmed;
         }
 

@@ -161,3 +161,25 @@ test("current successful response applies the canonical trimmed note", async () 
   assert.equal(autosave.getDraft(), "citrus");
   assert.equal(autosave.getConfirmed(), "citrus");
 });
+
+test("unchanged normalized draft returns to canonical text without a request", async () => {
+  const {createNoteAutosave} = await modulePromise;
+  const timers = fakeTimers();
+  let requests = 0;
+  const autosave = createNoteAutosave({
+    initialNote: "citrus",
+    saveNote: async note => {
+      requests++;
+      return note;
+    },
+    delayMs: 700,
+    setTimer: timers.setTimer,
+    clearTimer: timers.clearTimer,
+  });
+
+  autosave.setDraft("  citrus  ");
+  await autosave.flush();
+
+  assert.equal(requests, 0);
+  assert.equal(autosave.getDraft(), "citrus");
+});
