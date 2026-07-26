@@ -12,6 +12,7 @@
     --color-olive: #87945a;
     --color-danger: #b9513f;
     --color-border: #51463a;
+    --color-control-border: #8f7f6d;
     --color-inset: #110f0d;
     --font-display: "Oswald", "Arial Narrow", sans-serif;
     --font-body: "Source Sans 3", system-ui, sans-serif;
@@ -56,8 +57,11 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 .muted { color: var(--color-muted); }
 .app-link {
+    align-items: center;
     color: var(--color-amber);
+    display: inline-flex;
     font-weight: 600;
+    min-height: 2.5rem;
     text-decoration-color: transparent;
     text-underline-offset: .2em;
 }
@@ -73,7 +77,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .button {
     align-items: center;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-control-border);
     border-radius: 2px 12px 2px 12px;
     cursor: pointer;
     display: inline-flex;
@@ -92,7 +96,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .field {
     background: var(--color-inset);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-control-border);
     border-radius: 2px 12px 2px 12px;
     color: var(--color-text);
     min-height: 2.6rem;
@@ -108,6 +112,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .notice--error { border-left-color: var(--color-danger); color: #f3aaa0; }
 .notice--success { border-left-color: var(--color-olive); color: #cbd7a4; }
 .status-text { color: var(--color-muted); }
+.status-text--warning { color: var(--color-amber); }
+.status-text--error { color: #f3aaa0; }
 .status-text--success { color: var(--color-amber); }
 
 .ballot-list { display: grid; gap: .85rem; }
@@ -116,6 +122,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
     align-items: start;
     display: grid;
     gap: 1rem;
+    grid-template-columns: minmax(0, 1fr);
+}
+.ballot-card__header--with-result {
     grid-template-columns: minmax(0, 1fr) auto;
 }
 .ballot-card__details { min-width: 0; }
@@ -152,7 +161,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 .vote-choice {
     background: var(--color-inset);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-control-border);
     border-radius: 2px 9px 2px 9px;
     color: var(--color-text);
     flex: 0 0 auto;
@@ -270,7 +279,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     padding: .75rem;
     text-align: center;
 }
-.matrix-score--empty { color: #74695d; font-weight: 400; }
+.matrix-score--empty { color: #9f9181; font-weight: 400; }
 .pagination { align-items: center; display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
 
 :focus-visible {

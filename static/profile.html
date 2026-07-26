@@ -70,7 +70,7 @@
                 document.getElementById("nickname").value = ballot.nickname || "";
             } catch (error) {
                 console.error(error);
-                message.className = "text-sm text-red-600";
+                message.className = "status-text status-text--error text-sm";
                 message.textContent = "Profil se nepodařilo načíst. Zkontroluj odkaz nebo obnov stránku.";
                 document.getElementById("saveButton").disabled = true;
             }
@@ -97,7 +97,7 @@
             event.preventDefault();
             const nickname = document.getElementById("nickname").value.trim();
             const message = document.getElementById("message");
-            message.className = "text-sm text-gray-500";
+            message.className = "status-text text-sm";
             message.textContent = "Ukládám…";
 
             try {
@@ -107,12 +107,12 @@
                     body: JSON.stringify({ nickname })
                 });
                 if (!response.ok) throw new Error("Profile save failed");
-                message.className = "text-sm text-green-700";
+                message.className = "status-text status-text--success text-sm";
                 message.textContent = "Přezdívka byla uložena.";
                 location.replace(votingURL);
             } catch (error) {
                 console.error(error);
-                message.className = "text-sm text-red-600";
+                message.className = "status-text status-text--error text-sm";
                 message.textContent = "Přezdívku se nepodařilo uložit.";
             }
         }

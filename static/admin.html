@@ -552,7 +552,8 @@
             document.getElementById("formTitle").textContent = "Upravit hlasovací položku";
             document.getElementById("cancelEditButton").hidden = false;
             formMessage.textContent = "";
-            contestantForm.scrollIntoView({ behavior: "smooth" });
+            const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            contestantForm.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
         }
 
         function resetContestantForm() {

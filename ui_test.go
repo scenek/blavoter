@@ -25,6 +25,16 @@ func requireUIContains(t *testing.T, body string, fragments ...string) {
 	}
 }
 
+func requireCSSRuleContains(t *testing.T, css, selector string, declarations ...string) {
+	t.Helper()
+	rulePattern := regexp.MustCompile(`(?s)` + regexp.QuoteMeta(selector) + `\s*\{([^}]*)\}`)
+	match := rulePattern.FindStringSubmatch(css)
+	if match == nil {
+		t.Fatalf("theme is missing rule %q", selector)
+	}
+	requireUIContains(t, match[1], declarations...)
+}
+
 func TestApplicationPagesLoadSharedTheme(t *testing.T) {
 	pages := []string{
 		"static/index.html",
@@ -82,14 +92,87 @@ func TestBallotPlacesAggregateResultBesideOptionDetails(t *testing.T) {
 	)
 }
 
-func TestSaveStatusRetainsSharedThemeAcrossRuntimeStates(t *testing.T) {
-	body := readUIFile(t, "static/index.html")
-	requireUIContains(t, body,
-		`status.className = "status-text mt-4 min-h-5 text-center text-sm text-gray-500"`,
-		`status.className = "status-text mt-4 min-h-5 text-center text-sm text-amber-700"`,
-		`status.className = "status-text status-text--success mt-4 min-h-5 text-center text-sm"`,
-		`status.className = "status-text mt-4 min-h-5 text-center text-sm text-red-600"`,
+func TestBallotUsesFullWidthWhenResultsAreHidden(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	requireCSSRuleContains(t, css, ".ballot-card__header",
+		"grid-template-columns: minmax(0, 1fr);",
 	)
+	requireCSSRuleContains(t, css, ".ballot-card__header--with-result",
+		"grid-template-columns: minmax(0, 1fr) auto;",
+	)
+
+	body := readUIFile(t, "static/index.html")
+	modifier := `header.classList.add("ballot-card__header--with-result")`
+	if count := strings.Count(body, modifier); count != 1 {
+		t.Fatalf("result header modifier assignment count = %d, want 1", count)
+	}
+	resultBranch := regexp.MustCompile(`if \(showResults\) \{\s*` + regexp.QuoteMeta(modifier))
+	if !resultBranch.MatchString(body) {
+		t.Error("result header modifier is not added inside the showResults branch")
+	}
+}
+
+func TestThemeProvidesAccessibleTouchAndControlStates(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	requireUIContains(t, css, "--color-control-border: #8f7f6d;")
+	requireCSSRuleContains(t, css, ".app-link",
+		"align-items: center;",
+		"display: inline-flex;",
+		"min-height: 2.5rem;",
+	)
+	for _, selector := range []string{".button", ".field", ".vote-choice"} {
+		requireCSSRuleContains(t, css, selector,
+			"border: 1px solid var(--color-control-border);",
+		)
+	}
+	requireCSSRuleContains(t, css, ".matrix-score--empty",
+		"color: #9f9181;",
+	)
+}
+
+func TestAdminScrollRespectsReducedMotion(t *testing.T) {
+	body := readUIFile(t, "static/admin.html")
+	requireUIContains(t, body,
+		`window.matchMedia("(prefers-reduced-motion: reduce)").matches`,
+		`contestantForm.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });`,
+	)
+}
+
+func TestRuntimeStatusesUseSemanticThemeColors(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	requireCSSRuleContains(t, css, ".status-text--warning",
+		"color: var(--color-amber);",
+	)
+	requireCSSRuleContains(t, css, ".status-text--error",
+		"color: #f3aaa0;",
+	)
+
+	ballot := readUIFile(t, "static/index.html")
+	requireUIContains(t, ballot,
+		`class="muted text-sm">Ohodnoť položky`,
+		`id="eventDescription" class="text-sm muted"`,
+		`status.className = "status-text mt-4 min-h-5 text-center text-sm"`,
+		`status.className = "status-text status-text--warning mt-4 min-h-5 text-center text-sm"`,
+		`status.className = "status-text status-text--success mt-4 min-h-5 text-center text-sm"`,
+		`status.className = "status-text status-text--error mt-4 min-h-5 text-center text-sm"`,
+	)
+
+	profile := readUIFile(t, "static/profile.html")
+	requireUIContains(t, profile,
+		`message.className = "status-text text-sm"`,
+		`message.className = "status-text status-text--success text-sm"`,
+		`message.className = "status-text status-text--error text-sm"`,
+	)
+
+	oldRuntimeColor := regexp.MustCompile(`(?:status|message)\.className\s*=\s*"[^"]*\btext-(?:gray|amber|green|red)-\d+`)
+	for page, body := range map[string]string{
+		"ballot":  ballot,
+		"profile": profile,
+	} {
+		if assignment := oldRuntimeColor.FindString(body); assignment != "" {
+			t.Errorf("%s still uses a Tailwind runtime status color: %s", page, assignment)
+		}
+	}
 }
 
 func TestVoteSelectionAndSavedStatusUseResultLinkColor(t *testing.T) {

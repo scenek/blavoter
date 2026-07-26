@@ -15,11 +15,11 @@
             <a id="profileLink" href="#" class="app-link">Uživatelský profil</a>
         </div>
         <h1 id="eventName" class="text-3xl font-bold text-amber-600">Načítám událost…</h1>
-        <p class="text-gray-500 text-sm">Ohodnoť položky známkou 0 (nejhorší) – 10 (nejlepší).</p>
+        <p class="muted text-sm">Ohodnoť položky známkou 0 (nejhorší) – 10 (nejlepší).</p>
     </header>
 
     <div class="panel panel--cut p-4 mb-4">
-        <p id="eventDescription" class="text-sm text-gray-500"></p>
+        <p id="eventDescription" class="text-sm muted"></p>
         <p id="votingStatus" hidden class="notice mt-3 px-3 py-2 text-sm font-semibold">
             Hlasování je dočasně zastaveno. Uložená hodnocení můžeš zobrazit, ale nyní je nelze měnit.
         </p>
@@ -162,6 +162,7 @@
                 header.appendChild(details);
 
                 if (showResults) {
+                    header.classList.add("ballot-card__header--with-result");
                     const average = document.createElement("div");
                     average.className = "ballot-card__result";
                     const averageValue = document.createElement("span");
@@ -241,7 +242,7 @@
                         }
                     }
 
-                    status.className = "status-text mt-4 min-h-5 text-center text-sm text-gray-500";
+                    status.className = "status-text mt-4 min-h-5 text-center text-sm";
                     status.textContent = "Ukládám hodnocení…";
                     const response = await authenticatedFetch(`/api/events/${encodeURIComponent(currentEventId)}/vote`, {
                         method: "POST",
@@ -258,7 +259,7 @@
                         votingStopped = true;
                         document.getElementById("votingStatus").hidden = false;
                         pendingScores.clear();
-                        status.className = "status-text mt-4 min-h-5 text-center text-sm text-amber-700";
+                        status.className = "status-text status-text--warning mt-4 min-h-5 text-center text-sm";
                         status.textContent = "Hlasování bylo zastaveno. Poslední změna nebyla uložena.";
                         await loadContestants();
                         alert("Hlasování bylo zastaveno. Hodnocení nebylo uloženo.");
@@ -282,7 +283,7 @@
                 }
             } catch (error) {
                 console.error(error);
-                status.className = "status-text mt-4 min-h-5 text-center text-sm text-red-600";
+                status.className = "status-text status-text--error mt-4 min-h-5 text-center text-sm";
                 status.textContent = "Hodnocení se nepodařilo uložit. Zkus vybrat hodnotu znovu.";
                 alert("Hodnocení se nepodařilo uložit.");
             } finally {
