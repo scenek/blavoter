@@ -95,7 +95,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     background: rgb(240 173 69 / 12%);
 }
 .results-header-actions { justify-content: space-between; margin-bottom: 1rem; }
-.results-refresh { white-space: nowrap; }
+.results-refresh { min-height: 2.75rem; white-space: nowrap; }
 
 .panel {
     background: linear-gradient(145deg, var(--color-surface-raised), var(--color-surface));

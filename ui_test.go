@@ -240,6 +240,7 @@ func TestResultHeaderActionsAreProminentAndDoNotWrap(t *testing.T) {
 		"color: var(--color-amber);",
 	)
 	requireCSSRuleContains(t, css, ".results-refresh",
+		"min-height: 2.75rem;",
 		"white-space: nowrap;",
 	)
 }
