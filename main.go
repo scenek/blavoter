@@ -81,9 +81,14 @@ type ProfileRequest struct {
 	Nickname string `json:"nickname" binding:"required,max=80"`
 }
 
+type NoteRequest struct {
+	Note string `json:"note"`
+}
+
 type MyVotesResponse struct {
 	Nickname string                 `json:"nickname"`
 	Scores   map[string]interface{} `json:"scores"`
+	Notes    map[string]string      `json:"notes"`
 }
 
 var client *firestore.Client
@@ -106,6 +111,7 @@ const (
 	voterUIDKey                     = "voterUID"
 	authTokenKey                    = "authToken"
 	maxNicknameLength               = 80
+	maxNoteLength                   = 300
 	maxScoresPerVote                = 100
 	cleanedAnonymousUsersCollection = "cleanedAnonymousUsers"
 	voterBallotIndexesCollection    = "anonymousVoterBallots"
@@ -646,7 +652,10 @@ func getMyVotes(c *gin.Context) {
 
 func myVotesResponse(data map[string]interface{}) MyVotesResponse {
 	if data == nil {
-		return MyVotesResponse{Scores: map[string]interface{}{}}
+		return MyVotesResponse{
+			Scores: map[string]interface{}{},
+			Notes:  map[string]string{},
+		}
 	}
 	nickname, _ := data["nickname"].(string)
 	scores, _ := data["scores"].(map[string]interface{})
@@ -656,6 +665,7 @@ func myVotesResponse(data map[string]interface{}) MyVotesResponse {
 	return MyVotesResponse{
 		Nickname: nickname,
 		Scores:   scores,
+		Notes:    storedNotes(data["notes"]),
 	}
 }
 
@@ -761,6 +771,42 @@ func validVoteShape(req VoteRequest) bool {
 func validNickname(nickname string) bool {
 	nickname = strings.TrimSpace(nickname)
 	return nickname != "" && utf8.RuneCountInString(nickname) <= maxNicknameLength
+}
+
+func validNote(note string) bool {
+	return utf8.RuneCountInString(note) <= maxNoteLength
+}
+
+func storedNotes(value interface{}) map[string]string {
+	notes := make(map[string]string)
+	raw, ok := value.(map[string]interface{})
+	if !ok {
+		return notes
+	}
+	for contestantID, value := range raw {
+		note, ok := value.(string)
+		if !ok {
+			continue
+		}
+		note = strings.TrimSpace(note)
+		if validDocumentID(contestantID) && note != "" && validNote(note) {
+			notes[contestantID] = note
+		}
+	}
+	return notes
+}
+
+func setStoredNote(notes map[string]string, contestantID, note string) map[string]string {
+	updated := make(map[string]string, len(notes)+1)
+	for id, stored := range notes {
+		updated[id] = stored
+	}
+	if note == "" {
+		delete(updated, contestantID)
+	} else {
+		updated[contestantID] = note
+	}
+	return updated
 }
 
 func filterScores(scores map[string]int, allowedIDs map[string]struct{}) map[string]int {

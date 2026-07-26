@@ -216,6 +216,40 @@ func TestStoredScoresFiltersInvalidValues(t *testing.T) {
 	}
 }
 
+func TestValidNoteCountsUnicodeCodePoints(t *testing.T) {
+	if !validNote(strings.Repeat("🍺", maxNoteLength)) {
+		t.Fatal("maximum-length Unicode note was rejected")
+	}
+	if validNote(strings.Repeat("🍺", maxNoteLength+1)) {
+		t.Fatal("overlong Unicode note was accepted")
+	}
+}
+
+func TestStoredNotesFiltersAndTrimsValues(t *testing.T) {
+	got := storedNotes(map[string]interface{}{
+		"valid":   "  citrus  ",
+		"blank":   "   ",
+		"invalid": strings.Repeat("x", maxNoteLength+1),
+		"number":  int64(4),
+		"a/b":     "nested",
+	})
+	if len(got) != 1 || got["valid"] != "citrus" {
+		t.Fatalf("storedNotes() = %#v", got)
+	}
+}
+
+func TestSetStoredNotePreservesOtherNotesAndDeletesEmpty(t *testing.T) {
+	notes := map[string]string{"first": "one", "second": "two"}
+	updated := setStoredNote(notes, "first", "changed")
+	if updated["first"] != "changed" || updated["second"] != "two" {
+		t.Fatalf("setStoredNote() = %#v", updated)
+	}
+	cleared := setStoredNote(updated, "first", "")
+	if _, exists := cleared["first"]; exists || cleared["second"] != "two" {
+		t.Fatalf("cleared notes = %#v", cleared)
+	}
+}
+
 func TestFilterScoresRemovesDeletedContestants(t *testing.T) {
 	got := filterScores(
 		map[string]int{"existing": 8, "deleted": 6},
@@ -269,6 +303,7 @@ func TestMyVotesResponseIncludesNickname(t *testing.T) {
 	response := myVotesResponse(map[string]interface{}{
 		"nickname": "Štěpán",
 		"scores":   map[string]interface{}{"sample-1": int64(8)},
+		"notes":    map[string]interface{}{"sample-1": "  citrus  "},
 	})
 
 	if response.Nickname != "Štěpán" {
@@ -276,6 +311,9 @@ func TestMyVotesResponseIncludesNickname(t *testing.T) {
 	}
 	if response.Scores["sample-1"] != int64(8) {
 		t.Fatalf("Scores = %#v, want saved score", response.Scores)
+	}
+	if response.Notes["sample-1"] != "citrus" {
+		t.Fatalf("Notes = %#v, want trimmed saved note", response.Notes)
 	}
 }
 
@@ -287,6 +325,9 @@ func TestMyVotesResponseDefaultsToEmptyValues(t *testing.T) {
 	}
 	if response.Scores == nil || len(response.Scores) != 0 {
 		t.Fatalf("Scores = %#v, want non-nil empty scores", response.Scores)
+	}
+	if response.Notes == nil || len(response.Notes) != 0 {
+		t.Fatalf("Notes = %#v, want non-nil empty notes", response.Notes)
 	}
 }
 

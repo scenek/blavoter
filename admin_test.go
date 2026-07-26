@@ -179,6 +179,9 @@ func TestAdminVoterBallotFiltersDeletedOptions(t *testing.T) {
 				"current": int64(8),
 				"deleted": int64(4),
 			},
+			"notes": map[string]interface{}{
+				"current": "private text",
+			},
 		},
 		map[string]struct{}{"current": {}},
 	)
@@ -188,6 +191,13 @@ func TestAdminVoterBallotFiltersDeletedOptions(t *testing.T) {
 	}
 	if len(ballot.Scores) != 1 || ballot.Scores["current"] != 8 {
 		t.Fatalf("adminVoterBallot() scores = %#v", ballot.Scores)
+	}
+	encoded, err := json.Marshal(ballot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), `"notes"`) || strings.Contains(string(encoded), "private text") {
+		t.Fatalf("admin ballot leaked private notes: %s", encoded)
 	}
 }
 
