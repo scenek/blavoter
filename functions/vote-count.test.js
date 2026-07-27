@@ -9,5 +9,8 @@ test("formats standalone vote counts with the requested Czech forms", async () =
   assert.equal(formatVoteCount(0), "0 hlasů");
   assert.equal(formatVoteCount(1), "1 hlas");
   assert.equal(formatVoteCount(2), "2 hlasy");
-  assert.equal(formatVoteCount(10), "10 hlasy");
+  assert.equal(formatVoteCount(3), "3 hlasy");
+  assert.equal(formatVoteCount(4), "4 hlasy");
+  assert.equal(formatVoteCount(5), "5 hlasů");
+  assert.equal(formatVoteCount(10), "10 hlasů");
 });
