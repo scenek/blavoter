@@ -3,20 +3,21 @@
 :root {
     color-scheme: dark;
     --color-page: #171512;
-    --color-surface: #24201b;
-    --color-surface-raised: #302a23;
+    --color-surface: #322c25;
+    --color-surface-raised: #40372d;
     --color-text: #f4eadb;
     --color-muted: #b8aa98;
     --color-copper: #d68032;
     --color-amber: #f0ad45;
     --color-olive: #87945a;
     --color-danger: #b9513f;
-    --color-border: #51463a;
-    --color-control-border: #8f7f6d;
-    --color-inset: #110f0d;
+    --color-border: #6d5f50;
+    --color-control-border: #9c8a76;
+    --color-inset: #2c2721;
     --font-display: "Bricolage Grotesque", sans-serif;
     --font-body: "Instrument Sans", system-ui, sans-serif;
-    --radius-cut: 3px 18px 3px 18px;
+    --radius-panel: 22px;
+    --radius-control: 16px;
     --focus-ring: 0 0 0 3px rgb(240 173 69 / 35%);
 }
 
@@ -106,10 +107,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .panel {
     background: linear-gradient(145deg, var(--color-surface-raised), var(--color-surface));
     border: 1px solid var(--color-border);
-    box-shadow: 0 14px 34px rgb(0 0 0 / 22%), inset 0 1px rgb(255 255 255 / 4%);
+    box-shadow: 0 10px 24px rgb(0 0 0 / 18%), inset 0 1px rgb(255 255 255 / 4%);
     color: var(--color-text);
 }
-.panel--cut { border-radius: var(--radius-cut); }
+.panel--cut { border-radius: var(--radius-panel); }
 
 .button {
     align-items: center;
@@ -379,7 +380,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .matrix-panel { max-height: 70vh; overflow: auto; }
 .vote-matrix { border-collapse: separate; border-spacing: 0; min-width: 100%; }
 .matrix-heading {
-    background: #2b251f;
+    background: var(--color-surface-raised);
     border-bottom: 1px solid var(--color-copper);
     color: var(--color-text);
     min-width: 9rem;
@@ -398,8 +399,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 .matrix-heading.matrix-user { border-right: 1px solid var(--color-border); z-index: 30; }
 .matrix-row { background: var(--color-surface); }
-.matrix-row:nth-child(even) { background: #2a251f; }
-.matrix-row:hover { background: #352d24; }
+.matrix-row:nth-child(even) { background: #383129; }
+.matrix-row:hover { background: #493e33; }
 .matrix-user--body {
     background: inherit;
     border-right: 1px solid var(--color-border);

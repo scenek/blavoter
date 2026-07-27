@@ -60,7 +60,7 @@ func TestThemeDefinesAccessibleSharedPrimitives(t *testing.T) {
 	css := readUIFile(t, "static/theme.css")
 	requireUIContains(t, css,
 		"--color-page: #171512",
-		"--color-surface: #24201b",
+		"--color-surface: #322c25",
 		"--color-text: #f4eadb",
 		"--color-copper: #d68032",
 		"--color-olive: #87945a",
@@ -68,6 +68,24 @@ func TestThemeDefinesAccessibleSharedPrimitives(t *testing.T) {
 		":focus-visible",
 		"@media (prefers-reduced-motion: reduce)",
 	)
+}
+
+func TestThemeUsesRoundedLightSurfaceTokens(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	requireUIContains(t, css,
+		"--color-page: #171512;",
+		"--color-surface: #322c25;",
+		"--color-surface-raised: #40372d;",
+		"--color-inset: #2c2721;",
+		"--color-border: #6d5f50;",
+		"--color-control-border: #9c8a76;",
+		"--radius-panel: 22px;",
+		"--radius-control: 16px;",
+		"box-shadow: 0 10px 24px rgb(0 0 0 / 18%), inset 0 1px rgb(255 255 255 / 4%);",
+	)
+	if strings.Contains(css, "--radius-cut") {
+		t.Error("obsolete asymmetric radius token remains")
+	}
 }
 
 func TestThemeUsesFriendlyModernTypography(t *testing.T) {
@@ -285,7 +303,7 @@ func TestBallotSummaryShowsAndRefreshesPersonalScore(t *testing.T) {
 
 func TestThemeProvidesAccessibleTouchAndControlStates(t *testing.T) {
 	css := readUIFile(t, "static/theme.css")
-	requireUIContains(t, css, "--color-control-border: #8f7f6d;")
+	requireUIContains(t, css, "--color-control-border: #9c8a76;")
 	requireCSSRuleContains(t, css, ".app-link",
 		"align-items: center;",
 		"display: inline-flex;",
