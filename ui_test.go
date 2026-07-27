@@ -1,8 +1,10 @@
 package main
 
 import (
+	"math"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -33,6 +35,57 @@ func requireCSSRuleContains(t *testing.T, css, selector string, declarations ...
 		t.Fatalf("theme is missing rule %q", selector)
 	}
 	requireUIContains(t, match[1], declarations...)
+}
+
+func cssPropertyValue(t *testing.T, css, selector, property string) string {
+	t.Helper()
+	rulePattern := regexp.MustCompile(`(?s)` + regexp.QuoteMeta(selector) + `\s*\{([^}]*)\}`)
+	ruleMatch := rulePattern.FindStringSubmatch(css)
+	if ruleMatch == nil {
+		t.Fatalf("theme is missing rule %q", selector)
+	}
+	propertyPattern := regexp.MustCompile(`(?:^|;)\s*` + regexp.QuoteMeta(property) + `\s*:\s*([^;]+);`)
+	propertyMatch := propertyPattern.FindStringSubmatch(ruleMatch[1])
+	if propertyMatch == nil {
+		t.Fatalf("theme rule %q is missing property %q", selector, property)
+	}
+	return strings.TrimSpace(propertyMatch[1])
+}
+
+func cssHexRGB(t *testing.T, value string) [3]float64 {
+	t.Helper()
+	if !strings.HasPrefix(value, "#") || len(value) != 7 {
+		t.Fatalf("expected six-digit hex color, got %q", value)
+	}
+	var rgb [3]float64
+	for index := range rgb {
+		channel, err := strconv.ParseUint(value[1+index*2:3+index*2], 16, 8)
+		if err != nil {
+			t.Fatalf("parse color %q: %v", value, err)
+		}
+		rgb[index] = float64(channel) / 255
+	}
+	return rgb
+}
+
+func contrastRatio(foreground, background [3]float64) float64 {
+	luminance := func(rgb [3]float64) float64 {
+		channels := [3]float64{}
+		for index, channel := range rgb {
+			if channel <= 0.04045 {
+				channels[index] = channel / 12.92
+			} else {
+				channels[index] = math.Pow((channel+0.055)/1.055, 2.4)
+			}
+		}
+		return 0.2126*channels[0] + 0.7152*channels[1] + 0.0722*channels[2]
+	}
+	light := luminance(foreground)
+	dark := luminance(background)
+	if light < dark {
+		light, dark = dark, light
+	}
+	return (light + 0.05) / (dark + 0.05)
 }
 
 func TestApplicationPagesLoadSharedTheme(t *testing.T) {
@@ -305,6 +358,9 @@ func TestResultHeaderActionsAreProminentAndDoNotWrap(t *testing.T) {
 		"border: 1px solid var(--color-amber);",
 		"color: var(--color-amber);",
 	)
+	requireCSSRuleContains(t, css, ".header-action--results:hover,\n.header-action--results:focus-visible",
+		"background: rgb(240 173 69 / 16%);",
+	)
 	requireCSSRuleContains(t, css, ".results-refresh",
 		"min-height: 2.875rem;",
 		"white-space: nowrap;",
@@ -354,8 +410,34 @@ func TestThemeProvidesAccessibleTouchAndControlStates(t *testing.T) {
 		)
 	}
 	requireCSSRuleContains(t, css, ".matrix-score--empty",
-		"color: #a19484;",
+		"color: var(--color-muted);",
 	)
+}
+
+func TestVoteMatrixEmptyScoresMeetContrastAcrossRowStates(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	scoreColorValue := cssPropertyValue(t, css, ".matrix-score--empty", "color")
+	if scoreColorValue == "var(--color-muted)" {
+		scoreColorValue = cssPropertyValue(t, css, ":root", "--color-muted")
+	}
+	scoreColor := cssHexRGB(t, scoreColorValue)
+
+	rowStates := []struct {
+		name     string
+		selector string
+	}{
+		{name: "even", selector: ".matrix-row:nth-child(even)"},
+		{name: "hover", selector: ".matrix-row:hover"},
+	}
+	for _, state := range rowStates {
+		t.Run(state.name, func(t *testing.T) {
+			background := cssHexRGB(t, cssPropertyValue(t, css, state.selector, "background"))
+			ratio := contrastRatio(scoreColor, background)
+			if ratio < 4.5 {
+				t.Errorf("empty score contrast on %s rows = %.4f:1, want at least 4.5:1", state.name, ratio)
+			}
+		})
+	}
 }
 
 func TestSharedInteractiveControlsMeetTouchTarget(t *testing.T) {
@@ -493,11 +575,13 @@ func TestVoteMatrixKeepsNamedStickyColumns(t *testing.T) {
 	)
 }
 
-func TestAdministrationErrorLinkUsesStandaloneLayout(t *testing.T) {
-	body := readUIFile(t, "static/votes.html")
-	requireUIContains(t, body,
-		`link.className = "app-link app-link--standalone mt-3 block"`,
-	)
+func TestAdministrationErrorLinksUseStandaloneLayout(t *testing.T) {
+	for _, page := range []string{"static/results.html", "static/votes.html"} {
+		body := readUIFile(t, page)
+		requireUIContains(t, body,
+			`className = "app-link app-link--standalone mt-3 block"`,
+		)
+	}
 
 	css := readUIFile(t, "static/theme.css")
 	requireCSSRuleContains(t, css, ".app-link--standalone",

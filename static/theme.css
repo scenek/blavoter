@@ -417,7 +417,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     padding: .75rem;
     text-align: center;
 }
-.matrix-score--empty { color: #a19484; font-weight: 400; }
+.matrix-score--empty { color: var(--color-muted); font-weight: 400; }
 .pagination { align-items: center; display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
 
 :focus-visible {
