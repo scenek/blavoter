@@ -358,6 +358,15 @@ func TestThemeProvidesAccessibleTouchAndControlStates(t *testing.T) {
 	)
 }
 
+func TestSharedInteractiveControlsMeetTouchTarget(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	for _, selector := range []string{".app-link", ".button", ".field"} {
+		requireCSSRuleContains(t, css, selector,
+			"min-height: 2.75rem;",
+		)
+	}
+}
+
 func TestAdminScrollRespectsReducedMotion(t *testing.T) {
 	body := readUIFile(t, "static/admin.html")
 	requireUIContains(t, body,
@@ -500,7 +509,7 @@ func TestAdministrationErrorLinkUsesStandaloneLayout(t *testing.T) {
 func TestThemeRetainsMobileAndInteractionRequirements(t *testing.T) {
 	css := readUIFile(t, "static/theme.css")
 	requireUIContains(t, css,
-		"min-height: 2.5rem",
+		"min-height: 2.75rem",
 		".vote-choice--selected",
 		"border: 2px solid",
 		"@media (max-width: 390px)",

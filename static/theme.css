@@ -62,7 +62,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     color: var(--color-amber);
     display: inline-flex;
     font-weight: 600;
-    min-height: 2.5rem;
+    min-height: 2.75rem;
     text-decoration-color: transparent;
     text-underline-offset: .2em;
 }
@@ -121,7 +121,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     display: inline-flex;
     font-weight: 700;
     justify-content: center;
-    min-height: 2.5rem;
+    min-height: 2.75rem;
     padding: .55rem 1rem;
     transition: background-color .15s ease, border-color .15s ease, transform .15s ease;
 }
@@ -138,7 +138,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     border: 1px solid var(--color-control-border);
     border-radius: var(--radius-control);
     color: var(--color-text);
-    min-height: 2.6rem;
+    min-height: 2.75rem;
 }
 .field::placeholder { color: #817465; }
 .notice {
