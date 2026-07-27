@@ -348,9 +348,18 @@ func TestResultHeaderActionsAreProminentAndDoNotWrap(t *testing.T) {
 	)
 	requireUIContains(t, results,
 		`class="results-header-actions"`,
+		`id="backLink" href="/" class="app-link button button--secondary"`,
 		`class="button button--secondary results-refresh"`,
 		`Obnovit výsledky`,
 	)
+
+	eventHeading := strings.Index(results, `<h1 id="eventName" class="display-heading text-3xl">`)
+	resultsEyebrow := strings.Index(results, `<p class="eyebrow">Výsledky</p>`)
+	description := strings.Index(results, `<p class="muted mt-1 text-sm">Pořadí podle průměrného hodnocení.</p>`)
+	if eventHeading < 0 || resultsEyebrow < 0 || description < 0 ||
+		!(eventHeading < resultsEyebrow && resultsEyebrow < description) {
+		t.Error("results header must show the event heading, results sub-header, then description")
+	}
 
 	css := readUIFile(t, "static/theme.css")
 	requireCSSRuleContains(t, css, ".header-action--results",
@@ -373,7 +382,7 @@ func TestResultHeaderActionsAreProminentAndDoNotWrap(t *testing.T) {
 func TestBallotProfileActionIsTouchFriendlyAndDoesNotWrap(t *testing.T) {
 	ballot := readUIFile(t, "static/index.html")
 	requireUIContains(t, ballot,
-		`id="profileLink" href="#" class="app-link ballot-profile-action"`,
+		`id="profileLink" href="#" class="app-link button button--secondary ballot-profile-action"`,
 	)
 
 	css := readUIFile(t, "static/theme.css")
