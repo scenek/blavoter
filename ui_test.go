@@ -88,6 +88,44 @@ func TestThemeUsesRoundedLightSurfaceTokens(t *testing.T) {
 	}
 }
 
+func TestThemeUsesOnlyApprovedSymmetricalRadii(t *testing.T) {
+	css := readUIFile(t, "static/theme.css")
+	radiusDeclaration := regexp.MustCompile(`border-radius:\s*([^;]+);`)
+	allowed := map[string]bool{
+		"var(--radius-panel)":   true,
+		"var(--radius-control)": true,
+		"50%":                   true,
+	}
+	for _, match := range radiusDeclaration.FindAllStringSubmatch(css, -1) {
+		value := strings.TrimSpace(match[1])
+		if !allowed[value] {
+			t.Errorf("unapproved border radius remains: %s", value)
+		}
+	}
+
+	panelSelectors := []string{".panel--cut"}
+	for _, selector := range panelSelectors {
+		requireCSSRuleContains(t, css, selector,
+			"border-radius: var(--radius-panel);",
+		)
+	}
+
+	controlSelectors := []string{
+		".header-action--results",
+		".button",
+		".field",
+		".notice",
+		".vote-choice",
+		".ballot-note__textarea",
+		".result-row__rank",
+	}
+	for _, selector := range controlSelectors {
+		requireCSSRuleContains(t, css, selector,
+			"border-radius: var(--radius-control);",
+		)
+	}
+}
+
 func TestThemeUsesFriendlyModernTypography(t *testing.T) {
 	css := readUIFile(t, "static/theme.css")
 	requireUIContains(t, css,
@@ -262,6 +300,7 @@ func TestResultHeaderActionsAreProminentAndDoNotWrap(t *testing.T) {
 
 	css := readUIFile(t, "static/theme.css")
 	requireCSSRuleContains(t, css, ".header-action--results",
+		"background: rgb(240 173 69 / 10%);",
 		"border: 1px solid var(--color-amber);",
 		"color: var(--color-amber);",
 	)

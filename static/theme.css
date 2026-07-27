@@ -94,13 +94,14 @@ button, a { -webkit-tap-highlight-color: transparent; }
     white-space: nowrap;
 }
 .header-action--results {
+    background: rgb(240 173 69 / 10%);
     border: 1px solid var(--color-amber);
-    border-radius: 2px 12px 2px 12px;
+    border-radius: var(--radius-control);
     color: var(--color-amber);
 }
 .header-action--results:hover,
 .header-action--results:focus-visible {
-    background: rgb(240 173 69 / 12%);
+    background: rgb(240 173 69 / 16%);
 }
 .results-header-actions { justify-content: space-between; margin-bottom: 1rem; }
 
@@ -115,7 +116,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .button {
     align-items: center;
     border: 1px solid var(--color-control-border);
-    border-radius: 2px 12px 2px 12px;
+    border-radius: var(--radius-control);
     cursor: pointer;
     display: inline-flex;
     font-weight: 700;
@@ -135,7 +136,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .field {
     background: var(--color-inset);
     border: 1px solid var(--color-control-border);
-    border-radius: 2px 12px 2px 12px;
+    border-radius: var(--radius-control);
     color: var(--color-text);
     min-height: 2.6rem;
 }
@@ -144,7 +145,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-left: 4px solid var(--color-amber);
-    border-radius: 2px 12px 2px 12px;
+    border-radius: var(--radius-control);
     color: var(--color-muted);
 }
 .notice--error { border-left-color: var(--color-danger); color: #f3aaa0; }
@@ -225,7 +226,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .vote-choice {
     background: var(--color-inset);
     border: 1px solid var(--color-control-border);
-    border-radius: 2px 9px 2px 9px;
+    border-radius: var(--radius-control);
     color: var(--color-text);
     font-weight: 700;
     min-height: 2.75rem;
@@ -298,7 +299,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .ballot-note__textarea {
     background: var(--color-inset);
     border: 1px solid var(--color-control-border);
-    border-radius: 3px 12px 3px 12px;
+    border-radius: var(--radius-control);
     color: var(--color-text);
     min-height: 5rem;
     padding: .65rem .75rem;
@@ -334,7 +335,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     align-items: center;
     background: var(--color-inset);
     border: 1px solid var(--color-copper);
-    border-radius: 2px 10px 2px 10px;
+    border-radius: var(--radius-control);
     color: var(--color-amber);
     display: inline-flex;
     font-family: var(--font-display);
