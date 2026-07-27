@@ -156,7 +156,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .status-text--success { color: var(--color-amber); }
 
 .ballot-list { display: grid; gap: .85rem; }
-.ballot-card { overflow: clip; }
+.ballot-card { min-width: 0; overflow: clip; }
 .ballot-card__summary {
     align-items: center;
     cursor: pointer;

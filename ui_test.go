@@ -211,6 +211,7 @@ func TestClippedBallotCardKeepsSummaryFocusRingInsideBounds(t *testing.T) {
 	css := readUIFile(t, "static/theme.css")
 	requireCSSRuleContains(t, css, ".ballot-card",
 		"overflow: clip;",
+		"min-width: 0;",
 	)
 	requireCSSRuleContains(t, css, ".ballot-card__summary:focus-visible",
 		"box-shadow: inset 0 0 0 2px var(--color-amber);",
