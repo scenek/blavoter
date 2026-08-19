@@ -541,6 +541,28 @@ func TestVoteCountDisplaysUseSharedCzechFormatter(t *testing.T) {
 	}
 }
 
+func TestContestantDescriptionsUseSafeSharedLineBreakRenderer(t *testing.T) {
+	pages := []string{
+		"static/index.html",
+		"static/results.html",
+		"static/admin.html",
+	}
+	for _, page := range pages {
+		t.Run(page, func(t *testing.T) {
+			body := readUIFile(t, page)
+			requireUIContains(t, body,
+				`import { renderDescription`,
+				`renderDescription(description,`,
+			)
+		})
+	}
+
+	admin := readUIFile(t, "static/admin.html")
+	requireUIContains(t, admin,
+		`descriptionForEditing(contestant.description)`,
+	)
+}
+
 func TestSimplePublicPagesUseSemanticThemeComponents(t *testing.T) {
 	landing := readUIFile(t, "static/landing.html")
 	requireUIContains(t, landing, `class="empty-state panel panel--cut"`, `class="app-link"`)

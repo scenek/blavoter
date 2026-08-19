@@ -119,6 +119,7 @@
             signInWithPopup,
             signOut
         } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+        import { renderDescription, descriptionForEditing } from "/static/description.mjs";
         import { formatVoteCount } from "/static/vote-count.mjs";
 
         let auth;
@@ -519,7 +520,7 @@
                     name.textContent = contestant.name;
                     const description = document.createElement("p");
                     description.className = "muted text-sm";
-                    description.textContent = contestant.description || "Bez popisu";
+                    renderDescription(description, contestant.description, "Bez popisu");
                     const result = document.createElement("p");
                     result.className = "eyebrow mt-1";
                     result.textContent = contestant.voteCount > 0
@@ -548,7 +549,7 @@
         function editContestant(contestant) {
             document.getElementById("contestantId").value = contestant.id;
             document.getElementById("contestantName").value = contestant.name;
-            document.getElementById("contestantDescription").value = contestant.description || "";
+            document.getElementById("contestantDescription").value = descriptionForEditing(contestant.description);
             document.getElementById("formTitle").textContent = "Upravit hlasovací položku";
             document.getElementById("cancelEditButton").hidden = false;
             formMessage.textContent = "";

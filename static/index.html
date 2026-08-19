@@ -39,6 +39,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
         import { createNoteAutosave } from "/static/note-autosave.mjs";
+        import { renderDescription } from "/static/description.mjs";
         import { formatVoteCount } from "/static/vote-count.mjs";
 
         let myScores = {};
@@ -196,7 +197,7 @@
 
                 const description = document.createElement("p");
                 description.className = "ballot-card__description";
-                description.textContent = c.description;
+                renderDescription(description, c.description);
 
                 if (showResults) {
                     const average = document.createElement("div");

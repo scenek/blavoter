@@ -941,7 +941,14 @@ func bindContestantRequest(c *gin.Context) (ContestantRequest, bool) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Neplatné údaje soutěžícího"})
 		return ContestantRequest{}, false
 	}
+	req.Description = descriptionForStorage(req.Description)
 	return req, true
+}
+
+func descriptionForStorage(description string) string {
+	description = strings.ReplaceAll(description, "\r\n", "\n")
+	description = strings.ReplaceAll(description, "\r", "\n")
+	return strings.ReplaceAll(description, "\n", "<br />")
 }
 
 func validEventShape(req EventRequest) bool {

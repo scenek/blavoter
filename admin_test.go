@@ -137,6 +137,40 @@ func TestEventAndContestantValidation(t *testing.T) {
 	}
 }
 
+func TestBindContestantRequestStoresLineBreaksAsBR(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.POST("/", func(c *gin.Context) {
+		req, ok := bindContestantRequest(c)
+		if !ok {
+			return
+		}
+		c.JSON(http.StatusOK, req)
+	})
+
+	description := strings.Repeat("a", 249) + "\r\n" + strings.Repeat("b", 249)
+	body, err := json.Marshal(ContestantRequest{Name: "Vzorek 1", Description: description})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(string(body)))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d: %s", response.Code, http.StatusOK, response.Body.String())
+	}
+	var got ContestantRequest
+	if err := json.Unmarshal(response.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	want := strings.Repeat("a", 249) + "<br />" + strings.Repeat("b", 249)
+	if got.Description != want {
+		t.Fatalf("description = %q, want %q", got.Description, want)
+	}
+}
+
 func TestAdminEventResponseExposesPrivateLifecycleState(t *testing.T) {
 	data, err := json.Marshal(adminEventResponse(Event{
 		ID:                 "event-1",

@@ -32,6 +32,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+        import { renderDescription } from "/static/description.mjs";
         import { formatVoteCount } from "/static/vote-count.mjs";
 
         let mode = "";
@@ -175,7 +176,7 @@
             name.textContent = result.name;
             const description = document.createElement("p");
             description.className = "muted text-sm";
-            description.textContent = result.description || "";
+            renderDescription(description, result.description);
             details.append(name, description);
 
             const values = document.createElement("div");
