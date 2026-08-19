@@ -17,22 +17,39 @@
             display: grid;
             place-items: center;
             background: #f4f1e8;
+            font-family: system-ui, sans-serif;
         }
 
-        a {
-            display: block;
+        .landing {
+            display: grid;
+            gap: 24px;
             width: min(100%, 480px);
+        }
+
+        .landing-link {
+            display: block;
             border-radius: 8px;
             box-shadow: 0 10px 30px rgb(0 0 0 / 18%);
             transition: transform 160ms ease, box-shadow 160ms ease;
         }
 
-        a:hover {
+        .voting-link {
+            padding: 18px 24px;
+            background: #7a3100;
+            color: #fff;
+            font-size: clamp(1.5rem, 6vw, 2rem);
+            font-weight: 800;
+            line-height: 1.2;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .landing-link:hover {
             transform: translateY(-2px);
             box-shadow: 0 14px 36px rgb(0 0 0 / 24%);
         }
 
-        a:focus-visible {
+        .landing-link:focus-visible {
             outline: 4px solid #1877f2;
             outline-offset: 5px;
         }
@@ -45,21 +62,26 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            a {
+            .landing-link {
                 transition: none;
             }
         }
     </style>
 </head>
 <body>
-    <a href="https://fb.me/e/47KPXEQ8a"
-       target="_blank"
-       rel="noopener noreferrer"
-       aria-label="Otevřít facebookovou událost Blažovický pivní cirkus">
-        <img src="pivni-cirkus.jpg"
-             width="509"
-             height="720"
-             alt="Plakát Blažovického pivního cirkusu, 22. srpna 2026 na sokolském hřišti">
-    </a>
+    <main class="landing">
+        <a class="landing-link voting-link"
+           href="/event/9JNv5iAost2izyYxJaff/pivn%C3%AD-cirkus-2026">Hlasování Pivní cirkus 2026</a>
+        <a class="landing-link"
+           href="https://fb.me/e/47KPXEQ8a"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Otevřít facebookovou událost Blažovický pivní cirkus">
+            <img src="pivni-cirkus.jpg"
+                 width="509"
+                 height="720"
+                 alt="Plakát Blažovického pivního cirkusu, 22. srpna 2026 na sokolském hřišti">
+        </a>
+    </main>
 </body>
 </html>
